@@ -14,56 +14,112 @@ const ShopContextProvider = (props) => {
     const [showSearch, setShowSearch] = useState(false);
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [token, setToken] = useState('')
     const navigate = useNavigate();
 
+    const createBooking = async ({ listingId, renterId, startDate, endDate, totalPrice, deliveryETA }) => {
+        try {
+            const bookingId = `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const booking = {
+                id: bookingId,
+                listingId,
+                renterId,
+                startDate,
+                endDate,
+                totalPrice,
+                deliveryETA: deliveryETA || Date.now() + 30*60*1000, // Default express delivery
+                status: 'booked',
+                createdAt: new Date().toISOString()
+            };
 
-    const addToCart = async (itemId, size) => {
+            // Update local state immediately
+            setBookings(prev => [...prev, booking]);
+            
+            // Create corresponding order
+            const order = {
+                id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                bookingId,
+                items: [{
+                    listingId,
+                    startDate,
+                    endDate,
+                    totalPrice
+                }],
+                totalAmount: totalPrice,
+                status: 'confirmed',
+                paymentMethod: 'razorpay',
+                createdAt: new Date().toISOString()
+            };
+            
+            setOrders(prev => [...prev, order]);
 
-        if (!size) {
-            toast.error('Select Product Size');
+            // Call API (mock for now - replace with actual API call)
+            if (backendUrl) {
+                try {
+                    await axios.post(backendUrl + '/api/booking/create', booking, { headers: { token } });
+                } catch (apiError) {
+                    console.log('API call failed, but booking created locally:', apiError);
+                }
+            }
+
+            toast.success('Booking created successfully!');
+            return booking;
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            toast.error('Failed to create booking. Please try again.');
+            throw error;
+        }
+    };
+
+    const addToCart = async (itemId, rentalData) => {
+
+        if (!rentalData) {
+            toast.error('Please select rental details');
             return;
         }
 
         let cartData = structuredClone(cartItems);
 
+        // For rental items, we store the rental data directly
         if (cartData[itemId]) {
-            if (cartData[itemId][size]) {
-                cartData[itemId][size] += 1;
-            }
-            else {
-                cartData[itemId][size] = 1;
-            }
+            // If item already exists, update the rental data
+            cartData[itemId] = rentalData;
         }
         else {
-            cartData[itemId] = {};
-            cartData[itemId][size] = 1;
+            cartData[itemId] = rentalData;
         }
         setCartItems(cartData);
 
         if (token) {
             try {
-
-                await axios.post(backendUrl + '/api/cart/add', { itemId, size }, { headers: { token } })
-
+                await axios.post(backendUrl + '/api/cart/add', { itemId, rentalData }, { headers: { token } })
             } catch (error) {
                 console.log(error)
                 toast.error(error.message)
             }
         }
 
+        toast.success('Item added to cart!');
     }
 
     const getCartCount = () => {
         let totalCount = 0;
         for (const items in cartItems) {
-            for (const item in cartItems[items]) {
-                try {
-                    if (cartItems[items][item] > 0) {
-                        totalCount += cartItems[items][item];
+            // Check if it's rental data (object with rentalDays) or old size data (number)
+            if (typeof cartItems[items] === 'object' && cartItems[items].rentalDays) {
+                totalCount += 1; // Each rental item counts as 1
+            } else if (typeof cartItems[items] === 'object') {
+                // Handle old size-based cart items
+                for (const item in cartItems[items]) {
+                    try {
+                        if (cartItems[items][item] > 0) {
+                            totalCount += cartItems[items][item];
+                        }
+                    } catch (error) {
+                        // Ignore errors
                     }
-                } catch (error) {
-
                 }
             }
         }
@@ -95,13 +151,20 @@ const ShopContextProvider = (props) => {
         let totalAmount = 0;
         for (const items in cartItems) {
             let itemInfo = products.find((product) => product._id === items);
-            for (const item in cartItems[items]) {
-                try {
-                    if (cartItems[items][item] > 0) {
-                        totalAmount += itemInfo.price * cartItems[items][item];
+            
+            // Check if it's rental data (object with totalPrice) or old size data
+            if (typeof cartItems[items] === 'object' && cartItems[items].totalPrice) {
+                totalAmount += cartItems[items].totalPrice;
+            } else if (typeof cartItems[items] === 'object') {
+                // Handle old size-based cart items
+                for (const item in cartItems[items]) {
+                    try {
+                        if (cartItems[items][item] > 0) {
+                            totalAmount += itemInfo.price * cartItems[items][item];
+                        }
+                    } catch (error) {
+                        // Ignore errors
                     }
-                } catch (error) {
-
                 }
             }
         }
@@ -157,7 +220,7 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart,setCartItems,
         getCartCount, updateQuantity,
         getCartAmount, navigate, backendUrl,
-        setToken, token
+        setToken, token, createBooking, bookings, orders
     }
 
     return (

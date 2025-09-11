@@ -7,10 +7,11 @@ import RelatedProducts from '../components/RelatedProducts';
 const Product = () => {
 
   const { productId } = useParams();
-  const { products, currency ,addToCart } = useContext(ShopContext);
+  const { products, currency, navigate, token, addToCart } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState('')
-  const [size,setSize] = useState('')
+  const [rentalDays, setRentalDays] = useState(2)
+  const [startDate, setStartDate] = useState('')
 
   const fetchProductData = async () => {
 
@@ -27,6 +28,47 @@ const Product = () => {
   useEffect(() => {
     fetchProductData();
   }, [productId,products])
+
+  const calculateEndDate = () => {
+    if (!startDate) return '';
+    const start = new Date(startDate);
+    const end = new Date(start);
+    end.setDate(start.getDate() + rentalDays);
+    return end.toISOString().split('T')[0];
+  }
+
+  const calculateTotalPrice = () => {
+    if (!productData?.rentalPricePerDay) return productData?.price || 0;
+    return (productData.rentalPricePerDay || productData.price) * rentalDays;
+  }
+
+  const handleAddToCart = async () => {
+    if (!startDate) {
+      alert('Please select a start date');
+      return;
+    }
+
+    if (rentalDays < 1) {
+      alert('Rental duration must be at least 1 day');
+      return;
+    }
+
+    // Create rental data object
+    const rentalData = {
+      rentalDays,
+      startDate,
+      endDate: calculateEndDate(),
+      totalPrice: calculateTotalPrice()
+    };
+
+    // Add to cart with rental data instead of size
+    await addToCart(productData._id, rentalData);
+  }
+
+  const getMinDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
 
   return productData ? (
     <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
@@ -49,7 +91,13 @@ const Product = () => {
 
         {/* -------- Product Info ---------- */}
         <div className='flex-1'>
-          <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
+          <div className='flex items-center gap-2 mb-2'>
+            <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
+            <span className='bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium mt-2'>
+              Pristine Promise
+            </span>
+          </div>
+          
           <div className=' flex items-center gap-1 mt-2'>
               <img src={assets.star_icon} alt="" className="w-3 5" />
               <img src={assets.star_icon} alt="" className="w-3 5" />
@@ -58,22 +106,73 @@ const Product = () => {
               <img src={assets.star_dull_icon} alt="" className="w-3 5" />
               <p className='pl-2'>(122)</p>
           </div>
-          <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
+
+          <div className='mt-5'>
+            <p className='text-3xl font-medium'>{currency}{(productData.rentalPricePerDay || productData.price)}<span className='text-base font-normal text-gray-500'>/day</span></p>
+            <p className='text-lg font-medium text-gray-700 mt-1'>Total: {currency}{calculateTotalPrice()} for {rentalDays} day{rentalDays > 1 ? 's' : ''}</p>
+          </div>
+
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
+
+          {/* Owner Info */}
+          <div className='bg-gray-50 p-4 rounded-lg mt-5'>
+            <h3 className='font-medium text-sm mb-2'>Owner Information</h3>
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center'>
+                <span className='text-xs font-medium'>{(productData.ownerName || 'VR')[0]}</span>
+              </div>
+              <div>
+                <p className='text-sm font-medium'>{productData.ownerName || 'Vesper Rental'}</p>
+                <p className='text-xs text-gray-500'>Verified Owner</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rental Duration and Date Selection */}
           <div className='flex flex-col gap-4 my-8'>
-              <p>Select Size</p>
-              <div className='flex gap-2'>
-                {productData.sizes.map((item,index)=>(
-                  <button onClick={()=>setSize(item)} className={`border py-2 px-4 bg-gray-100 ${item === size ? 'border-orange-500' : ''}`} key={index}>{item}</button>
-                ))}
+              <div className='flex flex-col gap-2'>
+                <p>Rental Duration</p>
+                <select 
+                  value={rentalDays} 
+                  onChange={(e) => setRentalDays(Number(e.target.value))}
+                  className='border py-2 px-3 bg-gray-100 max-w-48'
+                >
+                  {[...Array(14)].map((_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {i + 1} day{i + 1 > 1 ? 's' : ''} {i + 1 == 2 ? '(Recommended)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className='flex flex-col gap-2'>
+                <p>Start Date</p>
+                <input 
+                  type="date" 
+                  value={startDate}
+                  min={getMinDate()}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className='border py-2 px-3 bg-gray-100 max-w-48'
+                />
+                {startDate && (
+                  <p className='text-xs text-gray-500'>Return by: {calculateEndDate()}</p>
+                )}
               </div>
           </div>
-          <button onClick={()=>addToCart(productData._id,size)} className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CART</button>
+
+          <button 
+            onClick={handleAddToCart} 
+            className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 hover:bg-gray-800 transition-colors'
+          >
+            ADD TO CART
+          </button>
+          
           <hr className='mt-8 sm:w-4/5' />
           <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
-              <p>100% Original product.</p>
-              <p>Cash on delivery is available on this product.</p>
-              <p>Easy return and exchange policy within 7 days.</p>
+              <p>✓ Professionally cleaned and sanitized</p>
+              <p>✓ Quality checked before each rental</p>
+              <p>✓ Free pickup and delivery</p>
+              <p>✓ Damage protection included</p>
           </div>
         </div>
       </div>
@@ -85,8 +184,8 @@ const Product = () => {
           <p className='border px-5 py-3 text-sm'>Reviews (122)</p>
         </div>
         <div className='flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500'>
-          <p>An e-commerce website is an online platform that facilitates the buying and selling of products or services over the internet. It serves as a virtual marketplace where businesses and individuals can showcase their products, interact with customers, and conduct transactions without the need for a physical presence. E-commerce websites have gained immense popularity due to their convenience, accessibility, and the global reach they offer.</p>
-          <p>E-commerce websites typically display products or services along with detailed descriptions, images, prices, and any available variations (e.g., sizes, colors). Each product usually has its own dedicated page with relevant information.</p>
+          <p>Vesper is your premier fashion rental marketplace, offering access to premium clothing and accessories without the commitment of ownership. Our rental model promotes sustainable fashion while providing affordable access to high-quality, designer pieces for special occasions or everyday wear.</p>
+          <p>Each item in our collection undergoes rigorous quality checks and professional cleaning with our Pristine Promise guarantee. Rent from verified owners and individuals to discover unique styles, reduce your environmental footprint, and enjoy variety in your wardrobe at a fraction of retail cost.</p>
         </div>
       </div>
 

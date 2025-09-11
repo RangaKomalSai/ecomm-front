@@ -14,7 +14,7 @@ const Footer = () => {
         <div>
             <img src={assets.logo} className='mb-5 w-32' alt="" />
             <p className='w-full md:w-2/3 text-gray-600'>
-            Apparently is India's first technology-driven fashion rental marketplace, making premium style affordable, accessible, and sustainable. We partner with brands and individuals to unlock underutilized wardrobes, offering curated outfits with our Pristine Promise of hygiene and quality.</p>
+            Vesper is India's first technology-driven fashion rental marketplace, making premium style affordable, accessible, and sustainable. We partner with brands and individuals to unlock underutilized wardrobes, offering curated outfits with our Pristine Promise of hygiene and quality.</p>
         </div>
 
         <div>
