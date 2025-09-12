@@ -10,6 +10,7 @@ const Cart = () => {
   const { cartItems, getCartAmount, removeFromCart, updateRentalData, backendUrl, token, currency } = useContext(ShopContext)
   const [cartData, setCartData] = useState({})
   const [products, setProducts] = useState([])
+  const [isNavigating, setIsNavigating] = useState(false)
   const navigate = useNavigate()
 
   const loadCartData = async () => {
@@ -41,10 +42,25 @@ const Cart = () => {
     }
   }, [token])
 
+  // Refresh cart data when component mounts (e.g., returning from place order)
+  useEffect(() => {
+    if (token) {
+      loadCartData()
+    }
+  }, [])
+
   const handleRemoveItem = async (itemKey) => {
     try {
       await axios.post(backendUrl + '/api/cart/remove', { itemKey }, { headers: { token } })
       removeFromCart(itemKey)
+      
+      // Update local cartData state immediately
+      setCartData(prev => {
+        const newCartData = { ...prev }
+        delete newCartData[itemKey]
+        return newCartData
+      })
+      
       toast.success('Item removed from cart')
     } catch (error) {
       console.log(error)
@@ -56,6 +72,16 @@ const Cart = () => {
     try {
       await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData: newRentalData }, { headers: { token } })
       updateRentalData(itemId, newRentalData)
+      
+      // Update local cartData state immediately
+      setCartData(prev => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          rentalData: newRentalData
+        }
+      }))
+      
       toast.success('Rental details updated')
     } catch (error) {
       console.log(error)
@@ -82,7 +108,12 @@ const Cart = () => {
       toast.error('Your cart is empty')
       return
     }
-    navigate('/place-order')
+    
+    setIsNavigating(true)
+    // Add a small delay for smooth transition
+    setTimeout(() => {
+      navigate('/place-order')
+    }, 300)
   }
 
   return (
@@ -212,9 +243,14 @@ const Cart = () => {
 
               <button 
                 onClick={handleCheckout}
-                className='w-full bg-black text-white py-3 rounded hover:bg-gray-800 transition-colors'
+                disabled={isNavigating}
+                className={`w-full py-3 rounded transition-all duration-300 ${
+                  isNavigating 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-black text-white hover:bg-gray-800'
+                }`}
               >
-                Proceed to Checkout
+                {isNavigating ? 'Processing...' : 'Proceed to Checkout'}
               </button>
             </div>
           </div>

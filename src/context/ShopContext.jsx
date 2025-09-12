@@ -17,6 +17,7 @@ const ShopContextProvider = (props) => {
     const [bookings, setBookings] = useState([]);
     const [orders, setOrders] = useState([]);
     const [token, setToken] = useState('')
+    const [userId, setUserId] = useState('')
     const navigate = useNavigate();
 
     const createBooking = async ({ listingId, renterId, startDate, endDate, totalPrice, deliveryETA }) => {
@@ -174,16 +175,30 @@ const ShopContextProvider = (props) => {
         }
     }
 
+    const getUserIdFromToken = (token) => {
+        try {
+            if (!token) return null
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            return payload.id
+        } catch (error) {
+            console.log('Error decoding token:', error)
+            return null
+        }
+    }
+
     useEffect(() => {
         getProductsData()
     }, [])
 
     useEffect(() => {
         if (!token && localStorage.getItem('token')) {
-            setToken(localStorage.getItem('token'))
-            getUserCart(localStorage.getItem('token'))
+            const storedToken = localStorage.getItem('token')
+            setToken(storedToken)
+            setUserId(getUserIdFromToken(storedToken))
+            getUserCart(storedToken)
         }
         if (token) {
+            setUserId(getUserIdFromToken(token))
             getUserCart(token)
         }
     }, [token])
@@ -194,7 +209,7 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart, setCartItems,
         getCartCount, updateRentalData,
         getCartAmount, navigate, backendUrl,
-        setToken, token, createBooking, bookings, orders
+        setToken, token, userId, createBooking, bookings, orders
     }
 
     return (

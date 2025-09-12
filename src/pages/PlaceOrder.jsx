@@ -2,11 +2,12 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { assets } from '../assets/assets'
 import axios from 'axios'
 
 const PlaceOrder = () => {
 
-  const { cartItems, getCartAmount, backendUrl, token, currency } = useContext(ShopContext)
+  const { cartItems, getCartAmount, backendUrl, token, currency, userId } = useContext(ShopContext)
   const [cartData, setCartData] = useState({})
   const [products, setProducts] = useState([])
   const [address, setAddress] = useState({
@@ -19,7 +20,9 @@ const PlaceOrder = () => {
     zipcode: '',
     phone: ''
   })
-  const [paymentMethod, setPaymentMethod] = useState('COD')
+  const [paymentMethod, setPaymentMethod] = useState('Razorpay')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const navigate = useNavigate()
 
   const loadCartData = async () => {
@@ -46,8 +49,9 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     if (token) {
-      loadCartData()
-      loadProducts()
+      Promise.all([loadCartData(), loadProducts()]).then(() => {
+        setIsLoading(false)
+      })
     } else {
       navigate('/login')
     }
@@ -78,63 +82,53 @@ const PlaceOrder = () => {
       return
     }
 
+    setIsPlacingOrder(true)
     try {
       const items = Object.values(cartData).map(item => ({
         itemId: item.itemId,
         rentalData: item.rentalData
       }))
 
-      if (paymentMethod === 'COD') {
-        const response = await axios.post(backendUrl + '/api/order/place', {
-          userId: 'current_user_id', // This should be replaced with actual user ID
-          items,
-          amount: calculateTotal(),
-          address
-        }, { headers: { token } })
+      // Only Razorpay payment
+      const response = await axios.post(backendUrl + '/api/order/razorpay', {
+        userId: userId,
+        items,
+        address
+      }, { headers: { token } })
 
-        if (response.data.success) {
-          toast.success('Order placed successfully!')
-          navigate('/orders')
-        }
-      } else if (paymentMethod === 'Razorpay') {
-        const response = await axios.post(backendUrl + '/api/order/razorpay', {
-          userId: 'current_user_id', // This should be replaced with actual user ID
-          items,
-          address
-        }, { headers: { token } })
-
-        if (response.data.success) {
-          // Handle Razorpay payment
-          const options = {
-            key: process.env.REACT_APP_RAZORPAY_KEY_ID,
-            amount: response.data.order.amount,
-            currency: response.data.order.currency,
-            name: 'Vesper Rental',
-            description: 'Rental Order',
-            order_id: response.data.order.id,
-            handler: function (response) {
-              verifyPayment(response)
-            },
-            prefill: {
-              name: address.firstName + ' ' + address.lastName,
-              email: 'user@example.com',
-              contact: address.phone
-            }
+      if (response.data.success) {
+        // Handle Razorpay payment
+        const options = {
+          key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+          amount: response.data.order.amount,
+          currency: response.data.order.currency,
+          name: 'Vesper Rental',
+          description: 'Rental Order',
+          order_id: response.data.order.id,
+          handler: function (response) {
+            verifyPayment(response)
+          },
+          prefill: {
+            name: address.firstName + ' ' + address.lastName,
+            email: 'user@example.com',
+            contact: address.phone
           }
-          const rzp = new window.Razorpay(options)
-          rzp.open()
         }
+        const rzp = new window.Razorpay(options)
+        rzp.open()
       }
     } catch (error) {
       console.log(error)
       toast.error('Failed to place order')
+    } finally {
+      setIsPlacingOrder(false)
     }
   }
 
   const verifyPayment = async (paymentResponse) => {
     try {
       const response = await axios.post(backendUrl + '/api/order/verifyRazorpay', {
-        userId: 'current_user_id',
+        userId: userId,
         razorpay_order_id: paymentResponse.razorpay_order_id,
         razorpay_payment_id: paymentResponse.razorpay_payment_id,
         razorpay_signature: paymentResponse.razorpay_signature
@@ -150,6 +144,15 @@ const PlaceOrder = () => {
       console.log(error)
       toast.error('Payment verification failed')
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className='border-t pt-16 text-center'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4'></div>
+        <p className='text-lg'>Loading your order...</p>
+      </div>
+    )
   }
 
   if (Object.keys(cartData).length === 0) {
@@ -278,29 +281,18 @@ const PlaceOrder = () => {
         {/* Payment & Summary */}
         <div>
           <h2 className='text-xl font-medium mb-4'>Payment Method</h2>
-          <div className='space-y-3 mb-6'>
-            <label className='flex items-center'>
-              <input 
-                type="radio" 
-                name="payment" 
-                value="COD" 
-                checked={paymentMethod === 'COD'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className='mr-2'
+          <div className='mb-6'>
+            <div className='flex items-center p-4 border rounded-lg bg-gray-50'>
+              <img 
+                src={assets.razorpay_logo} 
+                alt="Razorpay" 
+                className='h-8 mr-3'
               />
-              Cash on Delivery
-            </label>
-            <label className='flex items-center'>
-              <input 
-                type="radio" 
-                name="payment" 
-                value="Razorpay" 
-                checked={paymentMethod === 'Razorpay'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className='mr-2'
-              />
-              Razorpay
-            </label>
+              <div>
+                <div className='font-medium'>Secure Online Payment</div>
+                <div className='text-sm text-gray-500'>Powered by Razorpay</div>
+              </div>
+            </div>
           </div>
 
           <div className='bg-gray-50 p-6 rounded-lg'>
@@ -323,9 +315,14 @@ const PlaceOrder = () => {
 
             <button 
               onClick={handlePlaceOrder}
-              className='w-full bg-black text-white py-3 rounded hover:bg-gray-800 transition-colors'
+              disabled={isPlacingOrder}
+              className={`w-full py-3 rounded transition-all duration-300 ${
+                isPlacingOrder 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
             >
-              Place Order
+              {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
             </button>
           </div>
         </div>
