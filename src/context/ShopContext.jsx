@@ -82,14 +82,12 @@ const ShopContextProvider = (props) => {
 
         let cartData = structuredClone(cartItems);
 
-        // For rental items, we store the rental data directly
-        if (cartData[itemId]) {
-            // If item already exists, update the rental data
-            cartData[itemId] = rentalData;
-        }
-        else {
-            cartData[itemId] = rentalData;
-        }
+        // Add rental item to cart
+        cartData[itemId] = {
+            itemId: itemId,
+            rentalData: rentalData
+        };
+
         setCartItems(cartData);
 
         if (token) {
@@ -101,44 +99,33 @@ const ShopContextProvider = (props) => {
             }
         }
 
-        toast.success('Item added to cart!');
+        toast.success('Rental item added to cart!');
     }
 
     const getCartCount = () => {
         let totalCount = 0;
         for (const items in cartItems) {
-            // Check if it's rental data (object with rentalDays) or old size data (number)
-            if (typeof cartItems[items] === 'object' && cartItems[items].rentalDays) {
+            // All items are rental items
+            if (cartItems[items] && cartItems[items].rentalData) {
                 totalCount += 1; // Each rental item counts as 1
-            } else if (typeof cartItems[items] === 'object') {
-                // Handle old size-based cart items
-                for (const item in cartItems[items]) {
-                    try {
-                        if (cartItems[items][item] > 0) {
-                            totalCount += cartItems[items][item];
-                        }
-                    } catch (error) {
-                        // Ignore errors
-                    }
-                }
             }
         }
         return totalCount;
     }
 
-    const updateQuantity = async (itemId, size, quantity) => {
+    const updateRentalData = async (itemId, rentalData) => {
 
         let cartData = structuredClone(cartItems);
 
-        cartData[itemId][size] = quantity;
+        if (cartData[itemId]) {
+            cartData[itemId].rentalData = rentalData;
+        }
 
         setCartItems(cartData)
 
         if (token) {
             try {
-
-                await axios.post(backendUrl + '/api/cart/update', { itemId, size, quantity }, { headers: { token } })
-
+                await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData }, { headers: { token } })
             } catch (error) {
                 console.log(error)
                 toast.error(error.message)
@@ -150,22 +137,9 @@ const ShopContextProvider = (props) => {
     const getCartAmount = () => {
         let totalAmount = 0;
         for (const items in cartItems) {
-            let itemInfo = products.find((product) => product._id === items);
-            
-            // Check if it's rental data (object with totalPrice) or old size data
-            if (typeof cartItems[items] === 'object' && cartItems[items].totalPrice) {
-                totalAmount += cartItems[items].totalPrice;
-            } else if (typeof cartItems[items] === 'object') {
-                // Handle old size-based cart items
-                for (const item in cartItems[items]) {
-                    try {
-                        if (cartItems[items][item] > 0) {
-                            totalAmount += itemInfo.price * cartItems[items][item];
-                        }
-                    } catch (error) {
-                        // Ignore errors
-                    }
-                }
+            // All items are rental items
+            if (cartItems[items] && cartItems[items].rentalData) {
+                totalAmount += cartItems[items].rentalData.totalPrice;
             }
         }
         return totalAmount;
@@ -217,8 +191,8 @@ const ShopContextProvider = (props) => {
     const value = {
         products, currency, delivery_fee,
         search, setSearch, showSearch, setShowSearch,
-        cartItems, addToCart,setCartItems,
-        getCartCount, updateQuantity,
+        cartItems, addToCart, setCartItems,
+        getCartCount, updateRentalData,
         getCartAmount, navigate, backendUrl,
         setToken, token, createBooking, bookings, orders
     }

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
+import { toast } from 'react-toastify';
 
 const Product = () => {
 
@@ -44,12 +45,12 @@ const Product = () => {
 
   const handleAddToCart = async () => {
     if (!startDate) {
-      alert('Please select a start date');
+      toast.error('Please select a start date');
       return;
     }
 
     if (rentalDays < 1) {
-      alert('Rental duration must be at least 1 day');
+      toast.error('Rental duration must be at least 1 day');
       return;
     }
 
@@ -61,7 +62,7 @@ const Product = () => {
       totalPrice: calculateTotalPrice()
     };
 
-    // Add to cart with rental data instead of size
+    // Add to cart with rental data
     await addToCart(productData._id, rentalData);
   }
 
@@ -109,7 +110,6 @@ const Product = () => {
 
           <div className='mt-5'>
             <p className='text-3xl font-medium'>{currency}{(productData.rentalPricePerDay || productData.price)}<span className='text-base font-normal text-gray-500'>/day</span></p>
-            <p className='text-lg font-medium text-gray-700 mt-1'>Total: {currency}{calculateTotalPrice()} for {rentalDays} day{rentalDays > 1 ? 's' : ''}</p>
           </div>
 
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
