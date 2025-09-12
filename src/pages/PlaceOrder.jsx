@@ -193,6 +193,9 @@ const PlaceOrder = () => {
                   />
                   <div className='flex-1'>
                     <h3 className='font-medium'>{product.name}</h3>
+                    {item.rentalData.selectedSize && (
+                      <p className='text-sm text-gray-600'>Size: {item.rentalData.selectedSize}</p>
+                    )}
                     <p className='text-sm text-gray-600'>{item.rentalData.rentalDays} day{item.rentalData.rentalDays > 1 ? 's' : ''}</p>
                     <p className='text-sm text-gray-600'>{item.rentalData.startDate} to {item.rentalData.endDate}</p>
                     <p className='font-medium'>{currency}{item.rentalData.totalPrice}</p>

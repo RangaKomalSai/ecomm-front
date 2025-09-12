@@ -156,6 +156,35 @@ const Cart = () => {
                       
                       {/* Rental Details */}
                       <div className='mt-3 space-y-2'>
+                        {/* Size Selection */}
+                        {product.sizes && product.sizes.length > 0 && (
+                          <div className='flex items-center gap-4'>
+                            <label className='text-sm font-medium'>Size:</label>
+                            <select 
+                              value={item.rentalData.selectedSize || ''}
+                              onChange={(e) => {
+                                const newRentalData = {
+                                  ...item.rentalData,
+                                  selectedSize: e.target.value
+                                }
+                                handleUpdateRentalData(item.itemId, newRentalData)
+                              }}
+                              className='border px-2 py-1 rounded text-sm'
+                            >
+                              <option value="">Select Size</option>
+                              {product.sizes.map((sizeOption, index) => (
+                                <option 
+                                  key={index} 
+                                  value={sizeOption.size}
+                                  disabled={!sizeOption.available}
+                                >
+                                  {sizeOption.size} {!sizeOption.available ? '(Out of Stock)' : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
                         <div className='flex items-center gap-4'>
                           <label className='text-sm font-medium'>Rental Duration:</label>
                           <select 

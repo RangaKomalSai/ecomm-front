@@ -13,6 +13,7 @@ const Product = () => {
   const [image, setImage] = useState('')
   const [rentalDays, setRentalDays] = useState(2)
   const [startDate, setStartDate] = useState('')
+  const [selectedSize, setSelectedSize] = useState('')
 
   const fetchProductData = async () => {
 
@@ -54,12 +55,25 @@ const Product = () => {
       return;
     }
 
+    if (!selectedSize) {
+      toast.error('Please select a size');
+      return;
+    }
+
+    // Check if selected size is available
+    const sizeAvailable = productData.sizes?.find(size => size.size === selectedSize && size.available);
+    if (!sizeAvailable) {
+      toast.error('Selected size is not available');
+      return;
+    }
+
     // Create rental data object
     const rentalData = {
       rentalDays,
       startDate,
       endDate: calculateEndDate(),
-      totalPrice: calculateTotalPrice()
+      totalPrice: calculateTotalPrice(),
+      selectedSize
     };
 
     // Add to cart with rental data
@@ -127,6 +141,35 @@ const Product = () => {
               </div>
             </div>
           </div>
+
+          {/* Size Selection */}
+          {productData.sizes && productData.sizes.length > 0 && (
+            <div className='flex flex-col gap-2 my-6'>
+              <p className='font-medium'>Select Size</p>
+              <div className='flex flex-wrap gap-2'>
+                {productData.sizes.map((sizeOption, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedSize(sizeOption.size)}
+                    disabled={!sizeOption.available}
+                    className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
+                      selectedSize === sizeOption.size
+                        ? 'bg-black text-white border-black'
+                        : sizeOption.available
+                        ? 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                        : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {sizeOption.size}
+                    {!sizeOption.available && ' (Out of Stock)'}
+                  </button>
+                ))}
+              </div>
+              {selectedSize && (
+                <p className='text-sm text-gray-600'>Selected: {selectedSize}</p>
+              )}
+            </div>
+          )}
 
           {/* Rental Duration and Date Selection */}
           <div className='flex flex-col gap-4 my-8'>
