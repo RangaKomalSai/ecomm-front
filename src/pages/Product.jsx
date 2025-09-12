@@ -4,6 +4,9 @@ import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
 import { toast } from 'react-toastify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faStar } from '@fortawesome/free-solid-svg-icons'
+import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
 
 const Product = () => {
 
@@ -114,16 +117,36 @@ const Product = () => {
           </div>
           
           <div className=' flex items-center gap-1 mt-2'>
-              <img src={assets.star_icon} alt="" className="w-3 5" />
-              <img src={assets.star_icon} alt="" className="w-3 5" />
-              <img src={assets.star_icon} alt="" className="w-3 5" />
-              <img src={assets.star_icon} alt="" className="w-3 5" />
-              <img src={assets.star_dull_icon} alt="" className="w-3 5" />
+              <FontAwesomeIcon icon={faStar} className="w-4 h-4 text-yellow-400" />
+              <FontAwesomeIcon icon={faStar} className="w-4 h-4 text-yellow-400" />
+              <FontAwesomeIcon icon={faStar} className="w-4 h-4 text-yellow-400" />
+              <FontAwesomeIcon icon={faStar} className="w-4 h-4 text-yellow-400" />
+              <FontAwesomeIcon icon={faStarRegular} className="w-4 h-4 text-gray-300" />
               <p className='pl-2'>(122)</p>
           </div>
 
           <div className='mt-5'>
-            <p className='text-3xl font-medium'>{currency}{productData.rentalPricePerDay}<span className='text-base font-normal text-gray-500'>/day</span></p>
+            {productData.isFree ? (
+              <div className='flex items-center gap-3'>
+                <p className='text-3xl font-medium text-green-600'>Free</p>
+                {productData.originalPrice && (
+                  <div className='flex items-center gap-2'>
+                    <span className='text-lg text-gray-400 line-through'>{currency}{productData.originalPrice}</span>
+                    <span className='text-sm bg-green-100 text-green-600 px-2 py-1 rounded'>{productData.discountType}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className='flex items-center gap-3'>
+                <p className='text-3xl font-medium'>{currency}{productData.rentalPricePerDay}<span className='text-base font-normal text-gray-500'>/day</span></p>
+                {productData.discountType && productData.originalPrice && productData.originalPrice > productData.rentalPricePerDay && (
+                  <div className='flex items-center gap-2'>
+                    <span className='text-lg text-gray-400 line-through'>{currency}{productData.originalPrice}</span>
+                    <span className='text-sm bg-red-100 text-red-600 px-2 py-1 rounded'>{productData.discountType}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>

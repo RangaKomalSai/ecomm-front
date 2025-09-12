@@ -13,6 +13,8 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Refund from './pages/Refund'
 import Shipping from './pages/Shipping'
+import SubscriptionPlans from './pages/SubscriptionPlans'
+import Profile from './pages/Profile'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
@@ -47,6 +49,8 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/place-order' element={<PlaceOrder />} />
         <Route path='/orders' element={<Orders />} />
+        <Route path='/subscription-plans' element={<SubscriptionPlans />} />
+        <Route path='/profile' element={<Profile />} />
         <Route path='/terms' element={<Terms />} />
         <Route path='/privacy' element={<Privacy />} />
         <Route path='/refund' element={<Refund />} />

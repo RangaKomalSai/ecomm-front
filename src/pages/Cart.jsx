@@ -11,6 +11,8 @@ const Cart = () => {
   const [cartData, setCartData] = useState({})
   const [products, setProducts] = useState([])
   const [isNavigating, setIsNavigating] = useState(false)
+  const [cartTotal, setCartTotal] = useState({})
+  const [userType, setUserType] = useState('free')
   const navigate = useNavigate()
 
   const loadCartData = async () => {
@@ -18,6 +20,13 @@ const Cart = () => {
       const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } })
       if (response.data.success) {
         setCartData(response.data.cartData)
+        // Store cart total and user type for display
+        if (response.data.cartTotal) {
+          setCartTotal(response.data.cartTotal)
+        }
+        if (response.data.userType) {
+          setUserType(response.data.userType)
+        }
       }
     } catch (error) {
       console.log(error)
@@ -51,8 +60,15 @@ const Cart = () => {
 
   const handleRemoveItem = async (itemKey) => {
     try {
-      await axios.post(backendUrl + '/api/cart/remove', { itemKey }, { headers: { token } })
-      removeFromCart(itemKey)
+      // Get the itemId from the cart data
+      const itemId = cartData[itemKey]?.itemId
+      if (!itemId) {
+        toast.error('Item not found')
+        return
+      }
+
+      await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
+      removeFromCart(itemId)
       
       // Update local cartData state immediately
       setCartData(prev => {
@@ -94,6 +110,11 @@ const Cart = () => {
   }
 
   const calculateTotal = () => {
+    // Use cartTotal from backend if available, otherwise calculate locally
+    if (cartTotal.totalPrice !== undefined) {
+      return cartTotal.totalPrice
+    }
+    
     let total = 0
     for (const itemKey in cartData) {
       if (cartData[itemKey] && cartData[itemKey].rentalData) {
@@ -153,6 +174,21 @@ const Cart = () => {
                     <div className='flex-1'>
                       <h3 className='font-medium text-lg'>{product.name}</h3>
                       <p className='text-gray-600 text-sm'>{product.category} - {product.subCategory}</p>
+                      
+                      {/* Subscription Pricing Display */}
+                      <div className='mt-2 flex items-center gap-2'>
+                        {product.isFree ? (
+                          <span className='text-green-600 font-medium'>Free</span>
+                        ) : (
+                          <span className='font-medium'>{currency}{product.rentalPricePerDay}/day</span>
+                        )}
+                        {product.discountType && product.originalPrice && product.originalPrice > product.rentalPricePerDay && (
+                          <div className='flex items-center gap-1'>
+                            <span className='text-sm text-gray-400 line-through'>{currency}{product.originalPrice}</span>
+                            <span className='text-xs bg-red-100 text-red-600 px-1 py-0.5 rounded'>{product.discountType}</span>
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Rental Details */}
                       <div className='mt-3 space-y-2'>
@@ -254,11 +290,34 @@ const Cart = () => {
             <div className='bg-gray-50 p-6 rounded-lg sticky top-4'>
               <h3 className='text-lg font-medium mb-4'>Order Summary</h3>
               
+              {/* Subscription Benefits Display */}
+              {userType !== 'free' && (
+                <div className='mb-4 p-3 bg-green-50 border border-green-200 rounded-lg'>
+                  <div className='flex items-center gap-2 mb-2'>
+                    <span className='text-green-600 font-medium text-sm'>
+                      {userType === 'plus' ? 'Rotator Plus' : 'Rotator Pro'} Benefits
+                    </span>
+                  </div>
+                  <div className='text-xs text-green-700'>
+                    {userType === 'plus' 
+                      ? 'Tier 1 products free, Tier 2 products 50% off'
+                      : 'All products free'
+                    }
+                  </div>
+                </div>
+              )}
+              
               <div className='space-y-2 mb-4'>
                 <div className='flex justify-between'>
                   <span>Subtotal:</span>
                   <span>{currency}{calculateTotal()}</span>
                 </div>
+                {cartTotal.totalDiscount && cartTotal.totalDiscount > 0 && (
+                  <div className='flex justify-between text-green-600'>
+                    <span>Discount ({userType === 'plus' ? 'Plus' : 'Pro'}):</span>
+                    <span>-{currency}{cartTotal.totalDiscount}</span>
+                  </div>
+                )}
                 <div className='flex justify-between'>
                   <span>Delivery:</span>
                   <span>{currency}10</span>

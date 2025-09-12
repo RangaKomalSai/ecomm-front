@@ -135,6 +135,25 @@ const ShopContextProvider = (props) => {
 
     }
 
+    const removeFromCart = async (itemId) => {
+        let cartData = structuredClone(cartItems);
+
+        if (cartData[itemId]) {
+            delete cartData[itemId];
+        }
+
+        setCartItems(cartData)
+
+        if (token) {
+            try {
+                await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
+            } catch (error) {
+                console.log(error)
+                toast.error(error.message)
+            }
+        }
+    }
+
     const getCartAmount = () => {
         let totalAmount = 0;
         for (const items in cartItems) {
@@ -207,7 +226,7 @@ const ShopContextProvider = (props) => {
         products, currency, delivery_fee,
         search, setSearch, showSearch, setShowSearch,
         cartItems, addToCart, setCartItems,
-        getCartCount, updateRentalData,
+        getCartCount, updateRentalData, removeFromCart,
         getCartAmount, navigate, backendUrl,
         setToken, token, userId, createBooking, bookings, orders
     }
