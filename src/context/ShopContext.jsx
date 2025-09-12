@@ -186,7 +186,13 @@ const ShopContextProvider = (props) => {
             
             const response = await axios.post(backendUrl + '/api/cart/get',{},{headers:{token}})
             if (response.data.success) {
-                setCartItems(response.data.cartData)
+                // Convert array to object format for frontend consistency
+                const cartDataArray = response.data.cartData || [];
+                const cartDataObject = {};
+                cartDataArray.forEach(item => {
+                    cartDataObject[item.itemId] = item;
+                });
+                setCartItems(cartDataObject)
             }
         } catch (error) {
             console.log(error)
