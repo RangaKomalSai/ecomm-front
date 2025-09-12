@@ -39,8 +39,8 @@ const Product = () => {
   }
 
   const calculateTotalPrice = () => {
-    if (!productData?.rentalPricePerDay) return productData?.price || 0;
-    return (productData.rentalPricePerDay || productData.price) * rentalDays;
+    if (!productData?.rentalPricePerDay) return 0;
+    return productData.rentalPricePerDay * rentalDays;
   }
 
   const handleAddToCart = async () => {
@@ -109,7 +109,7 @@ const Product = () => {
           </div>
 
           <div className='mt-5'>
-            <p className='text-3xl font-medium'>{currency}{(productData.rentalPricePerDay || productData.price)}<span className='text-base font-normal text-gray-500'>/day</span></p>
+            <p className='text-3xl font-medium'>{currency}{productData.rentalPricePerDay}<span className='text-base font-normal text-gray-500'>/day</span></p>
           </div>
 
           <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>

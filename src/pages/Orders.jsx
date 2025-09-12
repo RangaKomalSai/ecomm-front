@@ -55,9 +55,9 @@ const Orders = () => {
                         <div>
                           <p className='sm:text-base font-medium'>{item.name}</p>
                           <div className='flex items-center gap-3 mt-1 text-base text-gray-700'>
-                            <p>{currency}{item.price}</p>
-                            <p>Quantity: {item.quantity}</p>
-                            <p>Size: {item.size}</p>
+                            <p>{currency}{item.rentalData?.totalPrice || item.price}</p>
+                            <p>Duration: {item.rentalData?.rentalDays || 'N/A'} days</p>
+                            <p>Period: {item.rentalData?.startDate ? new Date(item.rentalData.startDate).toLocaleDateString() : 'N/A'} - {item.rentalData?.endDate ? new Date(item.rentalData.endDate).toLocaleDateString() : 'N/A'}</p>
                           </div>
                           <p className='mt-1'>Date: <span className=' text-gray-400'>{new Date(item.date).toDateString()}</span></p>
                           <p className='mt-1'>Payment: <span className=' text-gray-400'>{item.paymentMethod}</span></p>
