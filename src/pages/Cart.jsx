@@ -15,6 +15,9 @@ const Cart = () => {
   const [userType, setUserType] = useState('free')
   const navigate = useNavigate()
 
+  // Use local cartItems for non-logged-in users, backend cartData for logged-in users
+  const displayCartData = token ? cartData : cartItems
+
   const loadCartData = async () => {
     try {
       const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } })
@@ -48,6 +51,9 @@ const Cart = () => {
     if (token) {
       loadCartData()
       loadProducts()
+    } else {
+      // For non-logged-in users, just load products
+      loadProducts()
     }
   }, [token])
 
@@ -61,21 +67,25 @@ const Cart = () => {
   const handleRemoveItem = async (itemKey) => {
     try {
       // Get the itemId from the cart data
-      const itemId = cartData[itemKey]?.itemId
+      const itemId = displayCartData[itemKey]?.itemId
       if (!itemId) {
         toast.error('Item not found')
         return
       }
 
-      await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
+      // Remove from local cart
       removeFromCart(itemId)
       
-      // Update local cartData state immediately
-      setCartData(prev => {
-        const newCartData = { ...prev }
-        delete newCartData[itemKey]
-        return newCartData
-      })
+      // If logged in, also remove from backend
+      if (token) {
+        await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
+        // Update local cartData state immediately
+        setCartData(prev => {
+          const newCartData = { ...prev }
+          delete newCartData[itemKey]
+          return newCartData
+        })
+      }
       
       toast.success('Item removed from cart')
     } catch (error) {
@@ -86,17 +96,21 @@ const Cart = () => {
 
   const handleUpdateRentalData = async (itemId, newRentalData) => {
     try {
-      await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData: newRentalData }, { headers: { token } })
+      // Update local cart
       updateRentalData(itemId, newRentalData)
       
-      // Update local cartData state immediately
-      setCartData(prev => ({
-        ...prev,
-        [itemId]: {
-          ...prev[itemId],
-          rentalData: newRentalData
-        }
-      }))
+      // If logged in, also update backend
+      if (token) {
+        await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData: newRentalData }, { headers: { token } })
+        // Update local cartData state immediately
+        setCartData(prev => ({
+          ...prev,
+          [itemId]: {
+            ...prev[itemId],
+            rentalData: newRentalData
+          }
+        }))
+      }
       
       toast.success('Rental details updated')
     } catch (error) {
@@ -110,23 +124,30 @@ const Cart = () => {
   }
 
   const calculateTotal = () => {
-    // Use cartTotal from backend if available, otherwise calculate locally
-    if (cartTotal.totalPrice !== undefined) {
+    // Use cartTotal from backend if available and user is logged in, otherwise calculate locally
+    if (token && cartTotal.totalPrice !== undefined) {
       return cartTotal.totalPrice
     }
     
     let total = 0
-    for (const itemKey in cartData) {
-      if (cartData[itemKey] && cartData[itemKey].rentalData) {
-        total += cartData[itemKey].rentalData.totalPrice
+    for (const itemKey in displayCartData) {
+      if (displayCartData[itemKey] && displayCartData[itemKey].rentalData) {
+        total += displayCartData[itemKey].rentalData.totalPrice
       }
     }
     return total
   }
 
   const handleCheckout = () => {
-    if (Object.keys(cartData).length === 0) {
+    if (Object.keys(displayCartData).length === 0) {
       toast.error('Your cart is empty')
+      return
+    }
+    
+    // Check if user is logged in
+    if (!token) {
+      toast.info('Please login to proceed with checkout')
+      navigate('/login')
       return
     }
     
@@ -143,7 +164,7 @@ const Cart = () => {
         <h1 className='font-bold'>SHOPPING CART</h1>
       </div>
 
-      {Object.keys(cartData).length === 0 ? (
+      {Object.keys(displayCartData).length === 0 ? (
         <div className='text-center py-16'>
           <img src={assets.cart_icon} alt="" className='w-32 mx-auto mb-4 opacity-50' />
           <h2 className='text-xl font-medium mb-2'>Your cart is empty</h2>
@@ -159,7 +180,7 @@ const Cart = () => {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
           {/* Cart Items */}
           <div className='lg:col-span-2'>
-            {Object.entries(cartData).map(([itemKey, item]) => {
+            {Object.entries(displayCartData).map(([itemKey, item]) => {
               const product = getProductDetails(item.itemId)
               if (!product) return null
 
@@ -290,6 +311,18 @@ const Cart = () => {
             <div className='bg-gray-50 p-6 rounded-lg sticky top-4'>
               <h3 className='text-lg font-medium mb-4'>Order Summary</h3>
               
+              {/* Login reminder for non-logged-in users */}
+              {!token && (
+                <div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-blue-600 font-medium text-sm'>💡 Guest Shopping</span>
+                  </div>
+                  <div className='text-xs text-blue-700 mt-1'>
+                    You can add items to cart without logging in. Login is required only at checkout.
+                  </div>
+                </div>
+              )}
+              
               {/* Subscription Benefits Display */}
               {userType !== 'free' && (
                 <div className='mb-4 p-3 bg-green-50 border border-green-200 rounded-lg'>
@@ -338,7 +371,7 @@ const Cart = () => {
                     : 'bg-black text-white hover:bg-gray-800'
                 }`}
               >
-                {isNavigating ? 'Processing...' : 'Proceed to Checkout'}
+                {isNavigating ? 'Processing...' : token ? 'Proceed to Checkout' : 'Login to Checkout'}
               </button>
             </div>
           </div>

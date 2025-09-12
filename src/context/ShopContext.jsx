@@ -91,6 +91,7 @@ const ShopContextProvider = (props) => {
 
         setCartItems(cartData);
 
+        // Only sync with backend if user is logged in
         if (token) {
             try {
                 await axios.post(backendUrl + '/api/cart/add', { itemId, rentalData }, { headers: { token } })
@@ -124,6 +125,7 @@ const ShopContextProvider = (props) => {
 
         setCartItems(cartData)
 
+        // Only sync with backend if user is logged in
         if (token) {
             try {
                 await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData }, { headers: { token } })
@@ -144,6 +146,7 @@ const ShopContextProvider = (props) => {
 
         setCartItems(cartData)
 
+        // Only sync with backend if user is logged in
         if (token) {
             try {
                 await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
