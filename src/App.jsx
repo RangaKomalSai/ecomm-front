@@ -15,6 +15,7 @@ import Refund from './pages/Refund'
 import Shipping from './pages/Shipping'
 import SubscriptionPlans from './pages/SubscriptionPlans'
 import Profile from './pages/Profile'
+import Wishlist from './pages/Wishlist'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import SearchBar from './components/SearchBar'
@@ -24,7 +25,7 @@ import Verify from './pages/Verify'
 
 const App = () => {
   return (
-    <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
+    <div className='bg-[#fdf7f0] text-[#3d2b1f] min-h-screen px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       <ToastContainer 
         position="bottom-right"
         autoClose={2000}
@@ -51,6 +52,7 @@ const App = () => {
         <Route path='/orders' element={<Orders />} />
         <Route path='/subscription-plans' element={<SubscriptionPlans />} />
         <Route path='/profile' element={<Profile />} />
+        <Route path='/wishlist' element={<Wishlist />} />
         <Route path='/terms' element={<Terms />} />
         <Route path='/privacy' element={<Privacy />} />
         <Route path='/refund' element={<Refund />} />

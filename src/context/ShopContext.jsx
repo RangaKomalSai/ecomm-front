@@ -18,6 +18,12 @@ const ShopContextProvider = (props) => {
     const [orders, setOrders] = useState([]);
     const [token, setToken] = useState('')
     const [userId, setUserId] = useState('')
+    const [userType, setUserType] = useState('free')
+    const [subscriptionBenefits, setSubscriptionBenefits] = useState({})
+    const [subscriptionPlans, setSubscriptionPlans] = useState([])
+    const [wishlist, setWishlist] = useState([])
+    const [wishlistStatus, setWishlistStatus] = useState({})
+    const [filterOptions, setFilterOptions] = useState({})
     const navigate = useNavigate();
 
     const createBooking = async ({ listingId, renterId, startDate, endDate, totalPrice, deliveryETA }) => {
@@ -61,14 +67,13 @@ const ShopContextProvider = (props) => {
                 try {
                     await axios.post(backendUrl + '/api/booking/create', booking, { headers: { token } });
                 } catch (apiError) {
-                    console.log('API call failed, but booking created locally:', apiError);
+                    // API call failed, but booking created locally
                 }
             }
 
             toast.success('Booking created successfully!');
             return booking;
         } catch (error) {
-            console.error('Error creating booking:', error);
             toast.error('Failed to create booking. Please try again.');
             throw error;
         }
@@ -96,7 +101,6 @@ const ShopContextProvider = (props) => {
             try {
                 await axios.post(backendUrl + '/api/cart/add', { itemId, rentalData }, { headers: { token } })
             } catch (error) {
-                console.log(error)
                 toast.error(error.message)
             }
         }
@@ -130,7 +134,6 @@ const ShopContextProvider = (props) => {
             try {
                 await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData }, { headers: { token } })
             } catch (error) {
-                console.log(error)
                 toast.error(error.message)
             }
         }
@@ -151,7 +154,6 @@ const ShopContextProvider = (props) => {
             try {
                 await axios.post(backendUrl + '/api/cart/remove', { itemId }, { headers: { token } })
             } catch (error) {
-                console.log(error)
                 toast.error(error.message)
             }
         }
@@ -170,16 +172,20 @@ const ShopContextProvider = (props) => {
 
     const getProductsData = async () => {
         try {
-
-            const response = await axios.get(backendUrl + '/api/product/list')
+            // Include auth token in headers if user is logged in
+            const headers = token ? { token } : {};
+            const response = await axios.get(backendUrl + '/api/product/list', { headers })
             if (response.data.success) {
                 setProducts(response.data.products.reverse())
+                // Store filter options from backend
+                if (response.data.filterOptions) {
+                    setFilterOptions(response.data.filterOptions)
+                }
             } else {
                 toast.error(response.data.message)
             }
 
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
     }
@@ -198,7 +204,6 @@ const ShopContextProvider = (props) => {
                 setCartItems(cartDataObject)
             }
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
     }
@@ -209,14 +214,210 @@ const ShopContextProvider = (props) => {
             const payload = JSON.parse(atob(token.split('.')[1]))
             return payload.id
         } catch (error) {
-            console.log('Error decoding token:', error)
             return null
+        }
+    }
+
+    // Get subscription plans
+    const getSubscriptionPlans = async () => {
+        try {
+            const response = await axios.get(backendUrl + '/api/subscription/plans')
+            if (response.data.success) {
+                setSubscriptionPlans(response.data.plans)
+            }
+        } catch (error) {
+            // Error fetching subscription plans
+        }
+    }
+
+    // Get user subscription status
+    const getSubscriptionStatus = async (userToken) => {
+        try {
+            if (!userToken) {
+                setUserType('free')
+                setSubscriptionBenefits({})
+                return
+            }
+
+            const response = await axios.get(backendUrl + '/api/subscription/status', {
+                headers: { token: userToken }
+            })
+            if (response.data.success) {
+                setUserType(response.data.userType)
+                setSubscriptionBenefits(response.data.benefits)
+            } else {
+                setUserType('free')
+                setSubscriptionBenefits({})
+            }
+        } catch (error) {
+            setUserType('free')
+            setSubscriptionBenefits({})
+        }
+    }
+
+    // Upgrade subscription
+    const upgradeSubscription = async (newUserType) => {
+        try {
+            const response = await axios.post(backendUrl + '/api/subscription/upgrade', 
+                { newUserType }, 
+                { headers: { token } }
+            )
+            if (response.data.success) {
+                setUserType(newUserType)
+                setSubscriptionBenefits(response.data.benefits)
+                // Refresh products with new subscription pricing
+                getProductsData()
+                toast.success(`Subscription upgraded to ${newUserType}`)
+                return true
+            } else {
+                toast.error(response.data.message)
+                return false
+            }
+        } catch (error) {
+            toast.error('Failed to upgrade subscription')
+            return false
+        }
+    }
+
+    // Wishlist functions
+    const addToWishlist = async (productId) => {
+        if (!token) {
+            toast.error('Please login to add items to wishlist');
+            return;
+        }
+
+        try {
+            const response = await axios.post(backendUrl + '/api/wishlist/add', 
+                { productId }, 
+                { headers: { token } }
+            );
+            
+            if (response.data.success) {
+                // Update local wishlist status
+                setWishlistStatus(prev => ({
+                    ...prev,
+                    [productId]: true
+                }));
+                // Refresh wishlist to update count
+                await getWishlist();
+                toast.success('Added to wishlist');
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error('Failed to add to wishlist');
+        }
+    }
+
+    const removeFromWishlist = async (productId) => {
+        if (!token) {
+            toast.error('Please login to manage wishlist');
+            return;
+        }
+
+        try {
+            const response = await axios.post(backendUrl + '/api/wishlist/remove', 
+                { productId }, 
+                { headers: { token } }
+            );
+            
+            if (response.data.success) {
+                // Update local wishlist status
+                setWishlistStatus(prev => ({
+                    ...prev,
+                    [productId]: false
+                }));
+                // Remove from local wishlist array
+                setWishlist(prev => prev.filter(item => item._id !== productId));
+                // Refresh wishlist to update count
+                await getWishlist();
+                toast.success('Removed from wishlist');
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error('Failed to remove from wishlist');
+        }
+    }
+
+    const getWishlist = async () => {
+        if (!token) return;
+
+        try {
+            const response = await axios.get(backendUrl + '/api/wishlist/get', 
+                { headers: { token } }
+            );
+            
+            if (response.data.success) {
+                setWishlist(response.data.wishlist);
+            }
+        } catch (error) {
+            // Error fetching wishlist
+        }
+    }
+
+    const checkWishlistStatus = async (productId) => {
+        if (!token) return false;
+
+        try {
+            const response = await axios.get(backendUrl + `/api/wishlist/check/${productId}`, 
+                { headers: { token } }
+            );
+            
+            if (response.data.success) {
+                return response.data.isInWishlist;
+            }
+        } catch (error) {
+            // Error checking wishlist status
+        }
+        return false;
+    }
+
+    const getBulkWishlistStatus = async (productIds) => {
+        if (!token || !productIds.length) return;
+
+        try {
+            const response = await axios.post(backendUrl + '/api/wishlist/bulk-check', 
+                { productIds }, 
+                { headers: { token } }
+            );
+            
+            if (response.data.success) {
+                setWishlistStatus(response.data.wishlistStatus);
+            }
+        } catch (error) {
+            // Error fetching bulk wishlist status
+        }
+    }
+
+    // Load wishlist status for all products when user logs in
+    const loadWishlistStatusForProducts = async () => {
+        if (!token || !products.length) return;
+        
+        const productIds = products.map(product => product._id);
+        await getBulkWishlistStatus(productIds);
+    }
+
+    const toggleWishlist = async (productId) => {
+        const isInWishlist = wishlistStatus[productId];
+        if (isInWishlist) {
+            await removeFromWishlist(productId);
+        } else {
+            await addToWishlist(productId);
         }
     }
 
     useEffect(() => {
         getProductsData()
+        getSubscriptionPlans()
     }, [])
+
+    // Load wishlist status when products are loaded and user is logged in
+    useEffect(() => {
+        if (token && products.length > 0) {
+            loadWishlistStatusForProducts()
+        }
+    }, [products, token])
 
     useEffect(() => {
         if (!token && localStorage.getItem('token')) {
@@ -224,10 +425,26 @@ const ShopContextProvider = (props) => {
             setToken(storedToken)
             setUserId(getUserIdFromToken(storedToken))
             getUserCart(storedToken)
+            getSubscriptionStatus(storedToken)
+            getWishlist()
+            // Refresh products with new auth
+            getProductsData()
         }
         if (token) {
             setUserId(getUserIdFromToken(token))
             getUserCart(token)
+            getSubscriptionStatus(token)
+            getWishlist()
+            // Refresh products with new auth
+            getProductsData()
+        } else {
+            // If no token, set to free user
+            setUserType('free')
+            setSubscriptionBenefits({})
+            setWishlist([])
+            setWishlistStatus({})
+            // Refresh products as free user
+            getProductsData()
         }
     }, [token])
 
@@ -237,7 +454,12 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart, setCartItems,
         getCartCount, updateRentalData, removeFromCart,
         getCartAmount, navigate, backendUrl,
-        setToken, token, userId, createBooking, bookings, orders
+        setToken, token, userId, createBooking, bookings, orders,
+        userType, subscriptionBenefits, subscriptionPlans,
+        getSubscriptionStatus, upgradeSubscription, getSubscriptionPlans,
+        wishlist, wishlistStatus, addToWishlist, removeFromWishlist,
+        getWishlist, toggleWishlist, checkWishlistStatus, getBulkWishlistStatus,
+        loadWishlistStatusForProducts, filterOptions
     }
 
     return (

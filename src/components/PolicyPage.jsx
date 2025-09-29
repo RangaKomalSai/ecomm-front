@@ -3,9 +3,9 @@ import Title from './Title'
 
 const PolicyPage = ({ title, content, lastUpdated = "2025" }) => {
   return (
-    <div className='border-t pt-16'>
+    <div className='border-t border-[#e8dccf] pt-16 bg-[#fdf7f0] text-[#3d2b1f]'>
       <div className='text-2xl mb-8'>
-        <Title text1={title.split(' ')[0]} text2={title.split(' ').slice(1).join(' ')} />
+        <h1 className='font-bold text-[#3d2b1f]'>{title.toUpperCase()}</h1>
       </div>
       
       <div className='max-w-4xl mx-auto'>

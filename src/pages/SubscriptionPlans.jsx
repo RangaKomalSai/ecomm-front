@@ -1,323 +1,374 @@
-import React, { useContext } from 'react'
-import { ShopContext } from '../context/ShopContext'
-import { useNavigate } from 'react-router-dom'
-import { assets } from '../assets/assets'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faTimes, faStar, faLock } from '@fortawesome/free-solid-svg-icons'
+import React, { useContext, useEffect, useState } from 'react';
+import { ShopContext } from '../context/ShopContext';
+import { toast } from 'react-toastify';
+import SubscriptionBadge from '../components/SubscriptionBadge';
+import Title from '../components/Title';
+import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck, faCrown, faStar, faRocket, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const SubscriptionPlans = () => {
-  const { token, currency } = useContext(ShopContext)
-  const navigate = useNavigate()
+    const { 
+        userType, 
+        subscriptionPlans, 
+        upgradeSubscription, 
+        token,
+        navigate,
+        backendUrl
+    } = useContext(ShopContext);
 
-  const plans = [
-    {
-      name: 'Free Tier',
-      price: 0,
-      period: 'forever',
-      description: 'Perfect for trying out our rental service',
-      features: [
-        'Only 1 time rentals (2-6 days)',
-        'Tier 1 prices as applicable',
-        'Tier 2 prices as applicable',
-        'Basic customer support',
-        'Standard delivery'
-      ],
-      limitations: [
-        'Limited to one-time rentals only',
-        'No subscription benefits',
-        'Standard pricing on all items'
-      ],
-      popular: false,
-      buttonText: 'Current Plan',
-      buttonStyle: 'bg-gray-200 text-gray-700 cursor-not-allowed'
-    },
-    {
-      name: 'Rotator Plus',
-      price: 1999,
-      period: 'month',
-      description: 'Best value for regular renters',
-      features: [
-        '6 Clothes, 2 swaps per month',
-        'Tier 1 products FREE',
-        'Tier 2 products 50% OFF',
-        'Priority customer support',
-        'Free pickup and delivery',
-        'Early access to new arrivals',
-        'Cancel anytime'
-      ],
-      limitations: [],
-      popular: true,
-      buttonText: 'Upgrade to Plus',
-      buttonStyle: 'bg-black hover:bg-gray-800 text-white'
-    },
-    {
-      name: 'Rotator Pro',
-      price: 3999,
-      period: 'month',
-      description: 'Ultimate rental experience',
-      features: [
-        '8 Clothes, 2 swaps per month',
-        'Tier 1 products FREE',
-        'Tier 2 products FREE',
-        'Premium customer support',
-        'Free pickup and delivery',
-        'Early access to new arrivals',
-        'Exclusive designer collections',
-        'Personal styling consultation',
-        'Cancel anytime'
-      ],
-      limitations: [],
-      popular: false,
-      buttonText: 'Upgrade to Pro',
-      buttonStyle: 'bg-black hover:bg-gray-800 text-white'
-    }
-  ]
+    const [loading, setLoading] = useState(false);
 
-  const handleUpgrade = (planName) => {
-    if (!token) {
-      navigate('/login')
-      return
-    }
-    
-    // Here you would integrate with your payment system
-    // For now, we'll just show an alert
-    alert(`Upgrade to ${planName} - Payment integration coming soon!`)
-  }
+    const handleUpgrade = async (planId) => {
+        if (!token) {
+            toast.info('Please login to upgrade your subscription');
+            navigate('/login');
+            return;
+        }
 
-  return (
-    <div className='min-h-screen py-16'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        {/* Header */}
-        <div className='text-center mb-16'>
-          <h1 className='text-4xl font-bold text-gray-900 mb-4'>
-            Choose Your Rental Plan
-          </h1>
-          <p className='text-xl text-gray-600 max-w-3xl mx-auto'>
-            Unlock exclusive benefits and save more with our subscription plans. 
-            Rent premium fashion without the commitment of ownership.
-          </p>
-        </div>
+        if (planId === userType) {
+            toast.info('You are already on this plan');
+            return;
+        }
 
-        {/* Pricing Cards */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-8 mb-16'>
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`relative bg-white rounded-2xl shadow-lg p-8 flex flex-col ${
-                plan.popular 
-                  ? 'ring-2 ring-blue-500 transform scale-105' 
-                  : 'hover:shadow-xl transition-shadow duration-300'
-              }`}
-            >
-              {/* Popular Badge */}
-              {plan.popular && (
-                <div className='absolute -top-4 left-1/2 transform -translate-x-1/2'>
-                  <span className='bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium'>
-                    Most Popular
-                  </span>
+        // Find the plan details
+        const targetPlan = subscriptionPlans.find(plan => plan.id === planId);
+        if (!targetPlan) {
+            toast.error('Plan not found');
+            return;
+        }
+
+        // If it's a downgrade (to free), handle differently
+        if (planId === 'free') {
+            const confirmed = window.confirm('Are you sure you want to downgrade to the free plan? You will lose all subscription benefits.');
+            if (!confirmed) return;
+            
+            setLoading(true);
+            try {
+                const success = await upgradeSubscription(planId);
+                if (success) {
+                    toast.success('Successfully downgraded to free plan');
+                }
+            } catch (error) {
+                toast.error('Failed to downgrade subscription');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        // For upgrades, initiate payment
+        setLoading(true);
+        try {
+            await initiatePayment(targetPlan);
+        } catch (error) {
+            toast.error('Payment failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const initiatePayment = async (plan) => {
+        try {
+            // Create subscription payment order
+            const response = await axios.post(backendUrl + '/api/subscription/payment', {
+                newUserType: plan.id
+            }, { headers: { token } });
+
+            if (response.data.success) {
+                // Handle Razorpay payment
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                    amount: response.data.order.amount,
+                    currency: response.data.order.currency,
+                    name: 'Vesper Rental',
+                    description: `${plan.name} Subscription`,
+                    order_id: response.data.order.id,
+                    handler: function (paymentResponse) {
+                        verifySubscriptionPayment(paymentResponse);
+                    },
+                    prefill: {
+                        name: 'User',
+                        email: 'user@example.com',
+                        contact: '9999999999'
+                    }
+                };
+                const rzp = new window.Razorpay(options);
+                rzp.open();
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error('Failed to initiate payment');
+        }
+    };
+
+    const verifySubscriptionPayment = async (paymentResponse) => {
+        try {
+            const response = await axios.post(backendUrl + '/api/subscription/verify-payment', {
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature
+            }, { headers: { token } });
+
+            if (response.data.success) {
+                toast.success('Subscription payment successful!');
+                // Refresh the page to update subscription status
+                window.location.reload();
+            } else {
+                toast.error('Payment verification failed');
+            }
+        } catch (error) {
+            toast.error('Payment verification failed');
+        }
+    };
+
+    const getPlanStatus = (planId) => {
+        if (planId === userType) return 'current';
+        if (planId === 'free') return 'downgrade';
+        return 'upgrade';
+    };
+
+    const getButtonText = (planId) => {
+        if (planId === userType) {
+            return 'Current Plan';
+        }
+        
+        // Determine if it's an upgrade or downgrade based on plan hierarchy
+        const planHierarchy = ['free', 'plus', 'pro'];
+        const currentIndex = planHierarchy.indexOf(userType);
+        const targetIndex = planHierarchy.indexOf(planId);
+        
+        if (targetIndex > currentIndex) {
+            return 'Upgrade';
+        } else if (targetIndex < currentIndex) {
+            return 'Downgrade';
+        }
+        
+        return 'Select Plan';
+    };
+
+    const getButtonClass = (planId) => {
+        if (planId === userType) {
+            return 'bg-green-100 text-green-600 cursor-not-allowed';
+        }
+        
+        // Determine if it's an upgrade or downgrade based on plan hierarchy
+        const planHierarchy = ['free', 'plus', 'pro'];
+        const currentIndex = planHierarchy.indexOf(userType);
+        const targetIndex = planHierarchy.indexOf(planId);
+        
+        if (targetIndex > currentIndex) {
+            // Upgrade - blue button
+            return 'bg-blue-600 text-white hover:bg-blue-700';
+        } else if (targetIndex < currentIndex) {
+            // Downgrade - gray button
+            return 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+        }
+        
+        return 'bg-blue-600 text-white hover:bg-blue-700';
+    };
+
+    const getPlanHighlightClass = (planId) => {
+        // Don't highlight current plan - only highlight recommended next plan
+        
+        // Recommended plan highlighting
+        if (!token && planId === 'plus') {
+            // Not logged in - highlight Plus as most popular
+            return 'border-blue-500 ring-2 ring-blue-100 bg-blue-50';
+        }
+        
+        if (token) {
+            // Logged in - highlight next plan only
+            if (userType === 'free' && planId === 'plus') {
+                return 'border-blue-500 ring-2 ring-blue-100 bg-blue-50';
+            }
+            if (userType === 'plus' && planId === 'pro') {
+                return 'border-blue-500 ring-2 ring-blue-100 bg-blue-50';
+            }
+        }
+        
+        return 'border-gray-200';
+    };
+
+    return (
+        <div className="bg-[#fdf7f0] text-[#3d2b1f] min-h-screen">
+            {/* Hero Section */}
+            <div className="text-center py-16 px-4">
+                <div className="max-w-4xl mx-auto">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#3d2b1f] mb-4">
+                        <span className="block">SUBSCRIPTION</span>
+                        <span className="block text-[#8b4513]">PLANS</span>
+                    </h1>
+                    <div className="w-32 h-1 bg-gradient-to-r from-[#3d2b1f] to-[#8b4513] mx-auto mt-6 rounded-full"></div>
+                    <p className="text-lg text-[#3d2b1f] opacity-80 mt-6 max-w-2xl mx-auto">
+                        Unlock exclusive benefits and save money on your rentals with our subscription plans
+                    </p>
                 </div>
-              )}
+            </div>
 
-              {/* Plan Header */}
-              <div className='text-center mb-8'>
-                <h3 className='text-2xl font-bold text-gray-900 mb-2'>{plan.name}</h3>
-                <p className='text-gray-600 mb-4'>{plan.description}</p>
-                <div className='mb-4'>
-                  <span className='text-4xl font-bold text-gray-900'>
-                    {plan.price === 0 ? 'Free' : `${currency}${plan.price}`}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className='text-gray-600'>/{plan.period}</span>
-                  )}
+            {/* Current Plan Badge */}
+            {/* {token && (
+                <div className="text-center mb-12">
+                    <SubscriptionBadge userType={userType} size="normal" />
                 </div>
-              </div>
+            )} */}
 
-              {/* Features */}
-              <div className='mb-8 flex-grow'>
-                <h4 className='font-semibold text-gray-900 mb-4'>What's included:</h4>
-                <ul className='space-y-3'>
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className='flex items-start'>
-                      <FontAwesomeIcon 
-                        icon={faCheck} 
-                        className='w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0' 
-                      />
-                      <span className='text-gray-700'>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/* Subscription Plans */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {subscriptionPlans.map((plan) => (
+                    <div
+                        key={plan.id}
+                        className={`relative bg-white rounded-xl shadow-lg border-2 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 ${getPlanHighlightClass(plan.id)}`}
+                    >
+                        {/* Popular Badge */}
+                        {((!token && plan.id === 'plus') || 
+                          (token && userType === 'free' && plan.id === 'plus') ||
+                          (token && userType === 'plus' && plan.id === 'pro')) && (
+                            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                                <span className="bg-gradient-to-r from-[#3d2b1f] to-[#8b4513] text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg">
+                                    <FontAwesomeIcon icon={faStar} className="w-4 h-4 mr-2" />
+                                    {!token ? 'Most Popular' : 'Recommended'}
+                                </span>
+                            </div>
+                        )}
 
-              {/* Limitations for Free Plan */}
-              {plan.limitations.length > 0 && (
-                <div className='mb-8'>
-                  <h4 className='font-semibold text-gray-900 mb-4'>Limitations:</h4>
-                  <ul className='space-y-2'>
-                    {plan.limitations.map((limitation, limitIndex) => (
-                      <li key={limitIndex} className='flex items-start'>
-                        <FontAwesomeIcon 
-                          icon={faTimes} 
-                          className='text-red-500 mr-3 mt-1 w-4 h-4 flex-shrink-0' 
-                        />
-                        <span className='text-gray-600 text-sm'>{limitation}</span>
-                      </li>
-                    ))}
-                  </ul>
+                        {/* Plan Header */}
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-[#fdf7f0] rounded-full flex items-center justify-center mx-auto mb-4">
+                                {plan.id === 'free' && <FontAwesomeIcon icon={faRocket} className="w-8 h-8 text-[#3d2b1f]" />}
+                                {plan.id === 'plus' && <FontAwesomeIcon icon={faStar} className="w-8 h-8 text-[#8b4513]" />}
+                                {plan.id === 'pro' && <FontAwesomeIcon icon={faCrown} className="w-8 h-8 text-[#3d2b1f]" />}
+                            </div>
+                            <h3 className="text-2xl font-bold text-[#3d2b1f] mb-2">
+                                {plan.name}
+                            </h3>
+                            <div className="text-4xl font-bold text-[#3d2b1f] mb-2">
+                                {plan.price === 0 ? 'Free' : `₹${plan.price}`}
+                                {plan.price > 0 && <span className="text-lg text-[#3d2b1f] opacity-60">/month</span>}
+                            </div>
+                            <p className="text-[#3d2b1f] opacity-80">
+                                {plan.id === 'free' && 'Pay as you go'}
+                                {plan.id === 'plus' && 'Best value for regular renters'}
+                                {plan.id === 'pro' && 'Maximum savings for frequent users'}
+                            </p>
+                        </div>
+
+                        {/* Features */}
+                        <div className="mb-8">
+                            <h4 className="font-semibold text-[#3d2b1f] mb-4 text-center">What's included:</h4>
+                            <ul className="space-y-3">
+                                {plan.features.map((feature, index) => (
+                                    <li key={index} className="flex items-start gap-3">
+                                        <FontAwesomeIcon icon={faCheck} className="w-5 h-5 text-[#8b4513] mt-0.5 flex-shrink-0" />
+                                        <span className="text-[#3d2b1f]">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Benefits Display */}
+                        {plan.benefits && (
+                            <div className="mb-6 p-6 bg-gradient-to-r from-[#fdf7f0] to-[#f5ece3] rounded-xl border border-[#e8dccf]">
+                                <h5 className="font-semibold text-[#3d2b1f] mb-4 text-center">Pricing Benefits:</h5>
+                                <div className="space-y-2 text-sm text-[#3d2b1f]">
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium">Premium (MRP &lt; ₹5000):</span>
+                                        <span className="text-[#8b4513] font-semibold">{plan.benefits.premiumPricing}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium">Royal (MRP ₹5000-₹15000):</span>
+                                        <span className="text-[#8b4513] font-semibold">{plan.benefits.royalPricing}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-medium">Luxury (MRP ₹15000+):</span>
+                                        <span className="text-[#8b4513] font-semibold">{plan.benefits.luxuryPricing}</span>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-[#e8dccf] text-center">
+                                        <span className="text-xs text-[#3d2b1f] opacity-60">Monthly Limit: {plan.benefits.monthlyLimit}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Button */}
+                        <button
+                            onClick={() => handleUpgrade(plan.id)}
+                            disabled={loading || plan.id === userType}
+                            className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${getButtonClass(plan.id)}`}
+                        >
+                            {loading ? 'Processing...' : getButtonText(plan.id)}
+                        </button>
+
+                        {/* Current Plan Indicator */}
+                        {plan.id === userType && (
+                            <div className="mt-4 text-center">
+                                <span className="text-green-600 font-medium text-sm bg-green-50 px-4 py-2 rounded-full">
+                                    <FontAwesomeIcon icon={faCheck} className="w-4 h-4 mr-2" />
+                                    You're currently on this plan
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ))}
                 </div>
-              )}
-
-              {/* CTA Button - positioned at the end */}
-              <div className='mt-auto'>
-                <button
-                  onClick={() => handleUpgrade(plan.name)}
-                  className={`w-full py-3 px-6 rounded-lg font-medium transition-colors duration-200 ${plan.buttonStyle}`}
-                  disabled={plan.name === 'Free Tier'}
-                >
-                  {plan.buttonText}
-                </button>
-              </div>
             </div>
-          ))}
+
+            {/* FAQ Section */}
+            <div className="mt-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#3d2b1f] mb-4">
+                        Frequently Asked Questions
+                    </h2>
+                    <div className="w-24 h-1 bg-gradient-to-r from-[#3d2b1f] to-[#8b4513] mx-auto rounded-full"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FontAwesomeIcon icon={faQuestionCircle} className="w-6 h-6 text-[#8b4513]" />
+                            <h3 className="font-semibold text-[#3d2b1f] text-lg">How does the pricing work?</h3>
+                        </div>
+                        <p className="text-[#3d2b1f] opacity-80 leading-relaxed">
+                            Products are categorized into Premium, Royal, and Luxury tiers based on their MRP. 
+                            Free users pay full price, Plus users get Premium free and Royal at 50% off, 
+                            while Pro users get Premium and Royal free. Both Plus and Pro have a 6-clothes-per-month limit.
+                        </p>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FontAwesomeIcon icon={faQuestionCircle} className="w-6 h-6 text-[#8b4513]" />
+                            <h3 className="font-semibold text-[#3d2b1f] text-lg">Can I change my plan anytime?</h3>
+                        </div>
+                        <p className="text-[#3d2b1f] opacity-80 leading-relaxed">
+                            Yes! You can upgrade or downgrade your subscription at any time. 
+                            Changes take effect immediately.
+                        </p>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FontAwesomeIcon icon={faQuestionCircle} className="w-6 h-6 text-[#8b4513]" />
+                            <h3 className="font-semibold text-[#3d2b1f] text-lg">What happens to my cart?</h3>
+                        </div>
+                        <p className="text-[#3d2b1f] opacity-80 leading-relaxed">
+                            Your cart will automatically update with new pricing when you upgrade. 
+                            You'll see your savings immediately.
+                        </p>
+                    </div>
+                    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-4">
+                            <FontAwesomeIcon icon={faQuestionCircle} className="w-6 h-6 text-[#8b4513]" />
+                            <h3 className="font-semibold text-[#3d2b1f] text-lg">Is there a free trial?</h3>
+                        </div>
+                        <p className="text-[#3d2b1f] opacity-80 leading-relaxed">
+                            Currently, we don't offer free trials, but you can start with the Free plan 
+                            and upgrade anytime to see the benefits.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
+    );
+};
 
-        {/* Comparison Table */}
-        <div className='bg-white rounded-2xl shadow-lg overflow-hidden'>
-          <div className='px-8 py-6 bg-gray-50 border-b'>
-            <h2 className='text-2xl font-bold text-gray-900'>Plan Comparison</h2>
-            <p className='text-gray-600 mt-2'>Compare features across all plans</p>
-          </div>
-          
-          <div className='overflow-x-auto'>
-            <table className='w-full'>
-              <thead className='bg-gray-50'>
-                <tr>
-                  <th className='px-6 py-4 text-left text-sm font-medium text-gray-900'>Features</th>
-                  <th className='px-6 py-4 text-center text-sm font-medium text-gray-900'>Free Tier</th>
-                  <th className='px-6 py-4 text-center text-sm font-medium text-blue-600'>Rotator Plus</th>
-                  <th className='px-6 py-4 text-center text-sm font-medium text-purple-600'>Rotator Pro</th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-200'>
-                <tr>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Monthly Rentals</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>1 time only</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>6 clothes, 2 swaps</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>8 clothes, 2 swaps</td>
-                </tr>
-                <tr className='bg-gray-50'>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Tier 1 Products (Upto MRP 5K)</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>As applicable</td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>FREE</td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>FREE</td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Tier 2 Products (5K-15K)</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>As applicable</td>
-                  <td className='px-6 py-4 text-center text-sm text-orange-600 font-medium'>50% OFF</td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>FREE</td>
-                </tr>
-                <tr className='bg-gray-50'>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Customer Support</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>Basic</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>Priority</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>Premium</td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Delivery</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600'>Standard</td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>Free</td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>Free</td>
-                </tr>
-                <tr className='bg-gray-50'>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Early Access</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-400'>
-                    <FontAwesomeIcon icon={faTimes} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>
-                    <FontAwesomeIcon icon={faCheck} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>
-                    <FontAwesomeIcon icon={faCheck} className='w-4 h-4' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Exclusive Collections</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-400'>
-                    <FontAwesomeIcon icon={faTimes} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-400'>
-                    <FontAwesomeIcon icon={faTimes} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>
-                    <FontAwesomeIcon icon={faCheck} className='w-4 h-4' />
-                  </td>
-                </tr>
-                <tr className='bg-gray-50'>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Personal Styling</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-400'>
-                    <FontAwesomeIcon icon={faTimes} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-400'>
-                    <FontAwesomeIcon icon={faTimes} className='w-4 h-4' />
-                  </td>
-                  <td className='px-6 py-4 text-center text-sm text-green-600 font-medium'>
-                    <FontAwesomeIcon icon={faCheck} className='w-4 h-4' />
-                  </td>
-                </tr>
-                <tr>
-                  <td className='px-6 py-4 text-sm font-medium text-gray-900'>Monthly Price</td>
-                  <td className='px-6 py-4 text-center text-sm text-gray-600 font-medium'>Free</td>
-                  <td className='px-6 py-4 text-center text-sm text-blue-600 font-bold'>{currency}1,999</td>
-                  <td className='px-6 py-4 text-center text-sm text-purple-600 font-bold'>{currency}3,999</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* FAQ Section */}
-        <div className='mt-16'>
-          <h2 className='text-3xl font-bold text-center text-gray-900 mb-12'>
-            Frequently Asked Questions
-          </h2>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-                Can I change my plan anytime?
-              </h3>
-              <p className='text-gray-600'>
-                Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately.
-              </p>
-            </div>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-                What happens to my current rentals?
-              </h3>
-              <p className='text-gray-600'>
-                Your current rentals remain unaffected. Plan changes only apply to future rentals.
-              </p>
-            </div>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-                Is there a cancellation fee?
-              </h3>
-              <p className='text-gray-600'>
-                No cancellation fees! You can cancel your subscription anytime without any penalties.
-              </p>
-            </div>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 mb-2'>
-                How does the swap system work?
-              </h3>
-              <p className='text-gray-600'>
-                You can exchange your current rentals for new items up to 2 times per month with Plus and Pro plans.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default SubscriptionPlans
+export default SubscriptionPlans;

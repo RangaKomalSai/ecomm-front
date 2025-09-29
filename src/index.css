@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global color scheme variables */
+:root {
+  --primary-bg: #fdf7f0;
+  --primary-text: #3d2b1f;
+  --secondary-bg: #e8dccf;
+  --footer-bg: #f5ece3;
+  --button-bg: #3d2b1f;
+  --button-hover: #5a3c2c;
+  --button-text: #fdf7f0;
+}
+
+/* Global body styling */
+body {
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  font-family: 'Outfit', sans-serif;
+}
+
 a.active hr{
     display: block;
 }
@@ -24,7 +42,7 @@ a.active hr{
   
   @media (max-width:640px) {
     a.active{
-        background-color: black;
-        color: white;
+        background-color: var(--button-bg);
+        color: var(--button-text);
     }
   }

@@ -4,15 +4,17 @@ import { useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import { toast } from 'react-toastify'
 import axios from 'axios'
+import PricingDisplay from '../components/PricingDisplay'
+import SubscriptionBadge from '../components/SubscriptionBadge'
+import UpgradeBanner from '../components/UpgradeBanner'
 
 const Cart = () => {
 
-  const { cartItems, getCartAmount, removeFromCart, updateRentalData, backendUrl, token, currency } = useContext(ShopContext)
+  const { cartItems, getCartAmount, removeFromCart, updateRentalData, backendUrl, token, currency, userType, subscriptionBenefits } = useContext(ShopContext)
   const [cartData, setCartData] = useState({})
   const [products, setProducts] = useState([])
   const [isNavigating, setIsNavigating] = useState(false)
   const [cartTotal, setCartTotal] = useState({})
-  const [userType, setUserType] = useState('free')
   const navigate = useNavigate()
 
   // Use local cartItems for non-logged-in users, backend cartData for logged-in users
@@ -32,18 +34,19 @@ const Cart = () => {
         }
       }
     } catch (error) {
-      console.log(error)
+      // Error loading cart data
     }
   }
 
   const loadProducts = async () => {
     try {
-      const response = await axios.get(backendUrl + '/api/product/list')
+      const headers = token ? { token } : {};
+      const response = await axios.get(backendUrl + '/api/product/list', { headers })
       if (response.data.success) {
         setProducts(response.data.products)
       }
     } catch (error) {
-      console.log(error)
+      // Error loading products
     }
   }
 
@@ -89,7 +92,6 @@ const Cart = () => {
       
       toast.success('Item removed from cart')
     } catch (error) {
-      console.log(error)
       toast.error('Failed to remove item')
     }
   }
@@ -114,7 +116,6 @@ const Cart = () => {
       
       toast.success('Rental details updated')
     } catch (error) {
-      console.log(error)
       toast.error('Failed to update rental details')
     }
   }
@@ -159,19 +160,19 @@ const Cart = () => {
   }
 
   return (
-    <div className='border-t pt-16'>
+    <div className='border-t border-[#e8dccf] pt-16 bg-[#fdf7f0] text-[#3d2b1f]'>
       <div className='text-2xl mb-8'>
-        <h1 className='font-bold'>SHOPPING CART</h1>
+        <h1 className='font-bold text-[#3d2b1f]'>SHOPPING CART</h1>
       </div>
 
       {Object.keys(displayCartData).length === 0 ? (
         <div className='text-center py-16'>
-          <img src={assets.cart_icon} alt="" className='w-32 mx-auto mb-4 opacity-50' />
-          <h2 className='text-xl font-medium mb-2'>Your cart is empty</h2>
-          <p className='text-gray-500 mb-6'>Add some rental items to get started</p>
+          <img src={assets.cart_icon} alt="" className='w-32 mx-auto mb-4 opacity-50' draggable={false} />
+          <h2 className='text-xl font-medium mb-2 text-[#3d2b1f]'>Your cart is empty</h2>
+          <p className='text-[#3d2b1f] opacity-60 mb-6'>Add some rental items to get started</p>
           <button 
             onClick={() => navigate('/collection')}
-            className='bg-black text-white px-6 py-3 rounded hover:bg-gray-800 transition-colors'
+            className='bg-[#3d2b1f] text-[#fdf7f0] px-6 py-3 rounded hover:bg-[#5a3c2c] transition-colors'
           >
             Browse Collection
           </button>
@@ -191,24 +192,22 @@ const Cart = () => {
                       src={product.image[0]} 
                       alt={product.name}
                       className='w-24 h-24 object-cover rounded'
+                      draggable={false}
                     />
                     <div className='flex-1'>
                       <h3 className='font-medium text-lg'>{product.name}</h3>
-                      <p className='text-gray-600 text-sm'>{product.category} - {product.subCategory}</p>
+                      <p className='text-gray-600 text-sm'>
+                        {product.filters?.find(f => f.type === 'category')?.value || 'General'} - {product.filters?.find(f => f.type === 'subCategory')?.value || 'Rental Item'}
+                      </p>
                       
                       {/* Subscription Pricing Display */}
-                      <div className='mt-2 flex items-center gap-2'>
-                        {product.isFree ? (
-                          <span className='text-green-600 font-medium'>Free</span>
-                        ) : (
-                          <span className='font-medium'>{currency}{product.rentalPricePerDay}/day</span>
-                        )}
-                        {product.discountType && product.originalPrice && product.originalPrice > product.rentalPricePerDay && (
-                          <div className='flex items-center gap-1'>
-                            <span className='text-sm text-gray-400 line-through'>{currency}{product.originalPrice}</span>
-                            <span className='text-xs bg-red-100 text-red-600 px-1 py-0.5 rounded'>{product.discountType}</span>
-                          </div>
-                        )}
+                      <div className='mt-2'>
+                        <PricingDisplay 
+                          product={product}
+                          size="normal"
+                          showOriginalPrice={true}
+                          showSubscriptionBadge={true}
+                        />
                       </div>
                       
                       {/* Rental Details */}
@@ -327,16 +326,25 @@ const Cart = () => {
               {userType !== 'free' && (
                 <div className='mb-4 p-3 bg-green-50 border border-green-200 rounded-lg'>
                   <div className='flex items-center gap-2 mb-2'>
-                    <span className='text-green-600 font-medium text-sm'>
-                      {userType === 'plus' ? 'Rotator Plus' : 'Rotator Pro'} Benefits
-                    </span>
+                    <SubscriptionBadge userType={userType} size="small" />
                   </div>
                   <div className='text-xs text-green-700'>
                     {userType === 'plus' 
-                      ? 'Tier 1 products free, Tier 2 products 50% off'
+                      ? 'Premium products free, Royal products 50% off'
                       : 'All products free'
                     }
                   </div>
+                </div>
+              )}
+
+              {/* Upgrade Banner for Free Users */}
+              {userType === 'free' && Object.keys(displayCartData).length > 0 && (
+                <div className='mb-4'>
+                  <UpgradeBanner 
+                    product={Object.values(displayCartData)[0]?.product}
+                    showSavings={true}
+                    compact={true}
+                  />
                 </div>
               )}
               

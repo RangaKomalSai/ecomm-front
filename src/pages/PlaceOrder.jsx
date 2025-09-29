@@ -32,18 +32,19 @@ const PlaceOrder = () => {
         setCartData(response.data.cartData)
       }
     } catch (error) {
-      console.log(error)
+      // Error loading cart data
     }
   }
 
   const loadProducts = async () => {
     try {
-      const response = await axios.get(backendUrl + '/api/product/list')
+      const headers = token ? { token } : {};
+      const response = await axios.get(backendUrl + '/api/product/list', { headers })
       if (response.data.success) {
         setProducts(response.data.products)
       }
     } catch (error) {
-      console.log(error)
+      // Error loading products
     }
   }
 
@@ -99,7 +100,7 @@ const PlaceOrder = () => {
       if (response.data.success) {
         // Handle Razorpay payment
         const options = {
-          key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: response.data.order.amount,
           currency: response.data.order.currency,
           name: 'Vesper Rental',
@@ -118,7 +119,6 @@ const PlaceOrder = () => {
         rzp.open()
       }
     } catch (error) {
-      console.log(error)
       toast.error('Failed to place order')
     } finally {
       setIsPlacingOrder(false)
@@ -141,7 +141,6 @@ const PlaceOrder = () => {
         toast.error('Payment verification failed')
       }
     } catch (error) {
-      console.log(error)
       toast.error('Payment verification failed')
     }
   }
@@ -170,35 +169,36 @@ const PlaceOrder = () => {
   }
 
   return (
-    <div className='border-t pt-16'>
+    <div className='border-t border-[#e8dccf] pt-16 bg-[#fdf7f0] text-[#3d2b1f]'>
       <div className='text-2xl mb-8'>
-        <h1 className='font-bold'>PLACE ORDER</h1>
+        <h1 className='font-bold text-[#3d2b1f]'>PLACE ORDER</h1>
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
         {/* Order Details */}
         <div>
-          <h2 className='text-xl font-medium mb-4'>Order Details</h2>
+          <h2 className='text-xl font-medium mb-4 text-[#3d2b1f]'>Order Details</h2>
           <div className='space-y-4 mb-6'>
             {Object.entries(cartData).map(([itemKey, item]) => {
               const product = getProductDetails(item.itemId)
               if (!product) return null
 
               return (
-                <div key={itemKey} className='flex gap-4 p-4 border rounded'>
+                <div key={itemKey} className='flex gap-4 p-4 border border-[#e8dccf] bg-white rounded-lg shadow-sm'>
                   <img 
                     src={product.image[0]} 
                     alt={product.name}
                     className='w-16 h-16 object-cover rounded'
+                    draggable={false}
                   />
                   <div className='flex-1'>
-                    <h3 className='font-medium'>{product.name}</h3>
+                    <h3 className='font-medium text-[#3d2b1f]'>{product.name}</h3>
                     {item.rentalData.selectedSize && (
-                      <p className='text-sm text-gray-600'>Size: {item.rentalData.selectedSize}</p>
+                      <p className='text-sm text-[#3d2b1f] opacity-80'>Size: {item.rentalData.selectedSize}</p>
                     )}
-                    <p className='text-sm text-gray-600'>{item.rentalData.rentalDays} day{item.rentalData.rentalDays > 1 ? 's' : ''}</p>
-                    <p className='text-sm text-gray-600'>{item.rentalData.startDate} to {item.rentalData.endDate}</p>
-                    <p className='font-medium'>{currency}{item.rentalData.totalPrice}</p>
+                    <p className='text-sm text-[#3d2b1f] opacity-80'>{item.rentalData.rentalDays} day{item.rentalData.rentalDays > 1 ? 's' : ''}</p>
+                    <p className='text-sm text-[#3d2b1f] opacity-80'>{item.rentalData.startDate} to {item.rentalData.endDate}</p>
+                    <p className='font-medium text-[#3d2b1f]'>{currency}{item.rentalData.totalPrice}</p>
                   </div>
                 </div>
               )
@@ -206,7 +206,7 @@ const PlaceOrder = () => {
           </div>
 
           {/* Address Form */}
-          <h2 className='text-xl font-medium mb-4'>Delivery Address</h2>
+          <h2 className='text-xl font-medium mb-4 text-[#3d2b1f]'>Delivery Address</h2>
           <div className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
               <input 
@@ -214,7 +214,7 @@ const PlaceOrder = () => {
                 placeholder="First Name"
                 value={address.firstName}
                 onChange={(e) => setAddress({...address, firstName: e.target.value})}
-                className='border px-3 py-2 rounded'
+                className='border border-[#e8dccf] bg-[#fdf7f0] text-[#3d2b1f] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#3d2b1f]'
                 required
               />
               <input 
@@ -222,7 +222,7 @@ const PlaceOrder = () => {
                 placeholder="Last Name"
                 value={address.lastName}
                 onChange={(e) => setAddress({...address, lastName: e.target.value})}
-                className='border px-3 py-2 rounded'
+                className='border border-[#e8dccf] bg-[#fdf7f0] text-[#3d2b1f] px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#3d2b1f]'
                 required
               />
             </div>
@@ -290,6 +290,7 @@ const PlaceOrder = () => {
                 src={assets.razorpay_logo} 
                 alt="Razorpay" 
                 className='h-8 mr-3'
+                draggable={false}
               />
               <div>
                 <div className='font-medium'>Secure Online Payment</div>

@@ -1,5 +1,8 @@
-import logo from './logo.png'
-import hero_img from './hero_img.png'
+import logo_icon from './logo_icon1.svg'
+import logo_text from './logo_text.svg'
+import hero_img1 from './hero_img1.png'
+import hero_img2 from './hero_img2.png'
+import hero_img3 from './hero_img3.png'
 import cart_icon from './cart.svg'
 import bin_icon from './bin_icon.png'
 import dropdown_icon from './dropdown_icon.png'
@@ -17,8 +20,11 @@ import razorpay_logo from './razorpay_logo.png'
 import cross_icon from './cross_icon.png'
 
 export const assets = {
-    logo,
-    hero_img,
+    logo_icon,
+    logo_text,
+    hero_img1,
+    hero_img2,
+    hero_img3,
     cart_icon,
     dropdown_icon,
     exchange_icon,

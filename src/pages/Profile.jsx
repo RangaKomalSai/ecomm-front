@@ -5,19 +5,22 @@ import { assets } from '../assets/assets'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingCart, faStar, faCrown, faUser } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingCart, faStar, faCrown, faUser, faMoneyBillWave, faHistory } from '@fortawesome/free-solid-svg-icons'
+import SubscriptionBadge from '../components/SubscriptionBadge'
 
 const Profile = () => {
   const { token, backendUrl, user, setUser } = useContext(ShopContext)
   const navigate = useNavigate()
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '',
     email: ''
   })
+  const [totalSaved, setTotalSaved] = useState(0)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -31,6 +34,7 @@ const Profile = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await axios.post(backendUrl + '/api/user/profile', {}, { 
         headers: { token } 
       })
@@ -40,9 +44,17 @@ const Profile = () => {
           name: response.data.user.name,
           email: response.data.user.email
         })
+        // Calculate total saved from rental history
+        if (response.data.user.rentalHistory) {
+          const saved = response.data.user.rentalHistory.reduce((total, rental) => {
+            return total + (rental.savedAmount || 0)
+          }, 0)
+          setTotalSaved(saved)
+        }
       }
     } catch (error) {
-      console.log(error)
+      console.error('Profile fetch error:', error)
+      setError('Failed to load profile data')
       toast.error('Failed to fetch profile data')
     } finally {
       setLoading(false)
@@ -72,7 +84,7 @@ const Profile = () => {
         toast.success('Profile updated successfully')
       }
     } catch (error) {
-      console.log(error)
+      console.error('Profile update error:', error)
       toast.error('Failed to update profile')
     }
   }
@@ -84,32 +96,22 @@ const Profile = () => {
     })
   }
 
-  const getSubscriptionBadge = (userType) => {
-    switch (userType) {
-      case 'plus':
-        return { text: 'Rotator Plus', color: 'bg-blue-100 text-blue-800' }
-      case 'pro':
-        return { text: 'Rotator Pro', color: 'bg-purple-100 text-purple-800' }
-      default:
-        return { text: 'Free Tier', color: 'bg-gray-100 text-gray-800' }
-    }
-  }
 
   const getSubscriptionBenefits = (userType) => {
     switch (userType) {
       case 'plus':
         return [
           '6 Clothes, 2 swaps per month',
-          'Tier 1 products FREE',
-          'Tier 2 products 50% OFF',
+          'Premium products FREE',
+          'Royal products 50% OFF',
           'Priority customer support',
           'Free pickup and delivery'
         ]
       case 'pro':
         return [
           '8 Clothes, 2 swaps per month',
-          'Tier 1 products FREE',
-          'Tier 2 products FREE',
+          'Premium products FREE',
+          'Royal products FREE',
           'Premium customer support',
           'Free pickup and delivery',
           'Exclusive designer collections',
@@ -118,8 +120,8 @@ const Profile = () => {
       default:
         return [
           'Only 1 time rentals (2-6 days)',
-          'Tier 1 prices as applicable',
-          'Tier 2 prices as applicable',
+          'Premium prices as applicable',
+          'Royal prices as applicable',
           'Basic customer support'
         ]
     }
@@ -136,50 +138,61 @@ const Profile = () => {
     )
   }
 
-  if (!userData) {
+  if (error || !userData) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
         <div className='text-center'>
-          <p className='text-gray-600'>Failed to load profile data</p>
-          <button 
-            onClick={() => navigate('/')}
-            className='mt-4 bg-black text-white px-6 py-2 rounded hover:bg-gray-800'
-          >
-            Go Home
-          </button>
+          <FontAwesomeIcon icon={faUser} className='w-16 h-16 text-gray-400 mb-4' />
+          <p className='text-gray-600 mb-4'>{error || 'Failed to load profile data'}</p>
+          <div className='space-x-4'>
+            <button 
+              onClick={() => fetchUserData()}
+              className='bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700'
+            >
+              Retry
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className='bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700'
+            >
+              Go Home
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  const subscriptionBadge = getSubscriptionBadge(userData.userType)
   const subscriptionBenefits = getSubscriptionBenefits(userData.userType)
 
   return (
-    <div className='min-h-screen bg-gray-50 py-8'>
+    <div className='border-t border-[#e8dccf] pt-16 bg-[#fdf7f0] text-[#3d2b1f]'>
+      <div className='text-2xl mb-8'>
+        <h1 className='font-bold text-[#3d2b1f]'>MY PROFILE</h1>
+      </div>
       <div className='max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'>
         {/* Header */}
         <div className='bg-white rounded-2xl shadow-sm p-8 mb-8'>
           <div className='flex flex-col md:flex-row md:items-center md:justify-between'>
             <div className='flex items-center space-x-4 mb-4 md:mb-0'>
-              <div className='w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center'>
-                <span className='text-2xl font-bold text-gray-600'>
+              <div className='w-20 h-20 bg-[#e8dccf] rounded-full flex items-center justify-center'>
+                <span className='text-2xl font-bold text-[#3d2b1f]'>
                   {userData.name.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <h1 className='text-3xl font-bold text-gray-900'>{userData.name}</h1>
-                <p className='text-gray-600'>{userData.email}</p>
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${subscriptionBadge.color}`}>
-                  {subscriptionBadge.text}
-                </span>
+                <h1 className='text-3xl font-bold text-[#3d2b1f]'>{userData.name}</h1>
+                <p className='text-[#3d2b1f] opacity-80'>{userData.email}</p>
+                <div className='mt-2'>
+                  <SubscriptionBadge userType={userData.userType} size="small" />
+                </div>
               </div>
             </div>
             <div className='flex space-x-3'>
               {!isEditing ? (
                 <button
                   onClick={handleEdit}
-                  className='bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors'
+                  className='bg-[#3d2b1f] text-[#fdf7f0] px-6 py-2 rounded-lg hover:bg-[#5a3c2c] transition-colors'
                 >
                   Edit Profile
                 </button>
@@ -269,7 +282,12 @@ const Profile = () => {
                         <div>
                           <p className='text-sm text-gray-600'>Member Since</p>
                           <p className='text-lg font-medium text-gray-900'>
-                            {new Date(userData.createdAt).toLocaleDateString()}
+                            {userData.createdAt 
+                              ? new Date(userData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                              : userData._id 
+                                ? new Date(parseInt(userData._id.substring(0, 8), 16) * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                                : 'N/A'
+                            }
                           </p>
                         </div>
                         <div>
@@ -284,7 +302,7 @@ const Profile = () => {
                   <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
                     <div className='bg-blue-50 rounded-lg p-6'>
                       <div className='flex items-center'>
-                        <img src={assets.cart_icon} alt="Rentals" className='w-6 h-6 mr-3' />
+                        <FontAwesomeIcon icon={faShoppingCart} className='w-6 h-6 mr-3 text-blue-600' />
                         <div>
                           <p className='text-sm text-blue-600'>Total Rentals</p>
                           <p className='text-2xl font-bold text-blue-900'>{userData.rentalHistory?.length || 0}</p>
@@ -293,19 +311,22 @@ const Profile = () => {
                     </div>
                     <div className='bg-green-50 rounded-lg p-6'>
                       <div className='flex items-center'>
-                        <FontAwesomeIcon icon={faStar} className='w-8 h-8 mr-3 text-green-600' />
+                        <FontAwesomeIcon icon={faMoneyBillWave} className='w-6 h-6 mr-3 text-green-600' />
                         <div>
                           <p className='text-sm text-green-600'>Total Saved</p>
-                          <p className='text-2xl font-bold text-green-900'>₹2,450</p>
+                          <p className='text-2xl font-bold text-green-900'>₹{totalSaved.toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
                     <div className='bg-purple-50 rounded-lg p-6'>
                       <div className='flex items-center'>
-                        <FontAwesomeIcon icon={faCrown} className='w-8 h-8 mr-3 text-purple-600' />
+                        <FontAwesomeIcon icon={faCrown} className='w-6 h-6 mr-3 text-purple-600' />
                         <div>
                           <p className='text-sm text-purple-600'>Current Plan</p>
-                          <p className='text-2xl font-bold text-purple-900'>{subscriptionBadge.text}</p>
+                          <p className='text-2xl font-bold text-purple-900'>
+                            {userData.userType === 'plus' ? 'Rotator Plus' : 
+                             userData.userType === 'pro' ? 'Rotator Pro' : 'Free Tier'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -324,7 +345,10 @@ const Profile = () => {
                   <div className='bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6'>
                     <div className='flex items-center justify-between'>
                       <div>
-                        <h3 className='text-xl font-bold text-gray-900 mb-2'>{subscriptionBadge.text}</h3>
+                        <div className='flex items-center gap-3 mb-2'>
+                          <h3 className='text-xl font-bold text-gray-900'>Current Plan</h3>
+                          <SubscriptionBadge userType={userData.userType} />
+                        </div>
                         <p className='text-gray-600 mb-4'>
                           {userData.userType === 'free' 
                             ? 'Free forever - no subscription required'
@@ -341,7 +365,7 @@ const Profile = () => {
                       </div>
                       <div className='text-right'>
                         <p className='text-3xl font-bold text-gray-900'>
-                          {userData.userType === 'free' ? 'Free' : userData.userType === 'plus' ? '₹299' : '₹499'}
+                          {userData.userType === 'free' ? 'Free' : userData.userType === 'plus' ? '₹1999' : '₹3999'}
                         </p>
                         <p className='text-gray-600'>per month</p>
                       </div>
@@ -404,7 +428,7 @@ const Profile = () => {
                     </div>
                   ) : (
                     <div className='text-center py-12'>
-                      <img src={assets.cart_icon} alt="No rentals" className='w-12 h-12 mx-auto mb-4 opacity-50' />
+                      <FontAwesomeIcon icon={faHistory} className='w-12 h-12 mx-auto mb-4 text-gray-400' />
                       <h3 className='text-lg font-semibold text-gray-900 mb-2'>No rental history yet</h3>
                       <p className='text-gray-600 mb-6'>Start renting to see your history here</p>
                       <button
@@ -431,15 +455,29 @@ const Profile = () => {
                       <h3 className='text-lg font-semibold text-gray-900 mb-4'>Notifications</h3>
                       <div className='space-y-3'>
                         <label className='flex items-center'>
-                          <input type='checkbox' className='rounded border-gray-300 text-black focus:ring-black' defaultChecked />
+                          <input 
+                            type='checkbox' 
+                            className='rounded border-gray-300 text-black focus:ring-black' 
+                            defaultChecked 
+                            aria-label='Email notifications for new arrivals'
+                          />
                           <span className='ml-3 text-gray-700'>Email notifications for new arrivals</span>
                         </label>
                         <label className='flex items-center'>
-                          <input type='checkbox' className='rounded border-gray-300 text-black focus:ring-black' defaultChecked />
+                          <input 
+                            type='checkbox' 
+                            className='rounded border-gray-300 text-black focus:ring-black' 
+                            defaultChecked 
+                            aria-label='Rental reminders and updates'
+                          />
                           <span className='ml-3 text-gray-700'>Rental reminders and updates</span>
                         </label>
                         <label className='flex items-center'>
-                          <input type='checkbox' className='rounded border-gray-300 text-black focus:ring-black' />
+                          <input 
+                            type='checkbox' 
+                            className='rounded border-gray-300 text-black focus:ring-black' 
+                            aria-label='Marketing emails and promotions'
+                          />
                           <span className='ml-3 text-gray-700'>Marketing emails and promotions</span>
                         </label>
                       </div>
@@ -450,11 +488,20 @@ const Profile = () => {
                       <h3 className='text-lg font-semibold text-gray-900 mb-4'>Privacy</h3>
                       <div className='space-y-3'>
                         <label className='flex items-center'>
-                          <input type='checkbox' className='rounded border-gray-300 text-black focus:ring-black' defaultChecked />
+                          <input 
+                            type='checkbox' 
+                            className='rounded border-gray-300 text-black focus:ring-black' 
+                            defaultChecked 
+                            aria-label='Make profile visible to other users'
+                          />
                           <span className='ml-3 text-gray-700'>Make profile visible to other users</span>
                         </label>
                         <label className='flex items-center'>
-                          <input type='checkbox' className='rounded border-gray-300 text-black focus:ring-black' />
+                          <input 
+                            type='checkbox' 
+                            className='rounded border-gray-300 text-black focus:ring-black' 
+                            aria-label='Allow data analytics'
+                          />
                           <span className='ml-3 text-gray-700'>Allow data analytics</span>
                         </label>
                       </div>

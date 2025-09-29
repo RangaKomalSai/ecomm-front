@@ -29,29 +29,38 @@ const NewsletterBox = () => {
     }
 
   return (
-    <div className=' text-center'>
-      <p className='text-2xl font-medium text-gray-800'>Subscribe now & get 20% off</p>
-      <p className='text-gray-400 mt-3'>
-      Unlock premium fashion at a fraction of the price - join today and save
-      </p>
-      <form onSubmit={onSubmitHandler} className='w-full sm:w-1/2 flex items-center gap-3 mx-auto my-6 border pl-3'>
-        <input 
-          className='w-full sm:flex-1 outline-none' 
-          type="email" 
-          placeholder='Enter your email' 
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          disabled={isLoading}
-        />
-        <button 
-          type='submit' 
-          className='bg-black text-white text-xs px-10 py-4 disabled:opacity-50 disabled:cursor-not-allowed'
-          disabled={isLoading}
-        >
-          {isLoading ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
-        </button>
-      </form>
+    <div className='text-[#3d2b1f] py-16 px-6'>
+      <div className='max-w-4xl mx-auto text-center'>
+        <div className='mb-8'>
+          <h2 className='text-3xl lg:text-4xl font-semibold mb-4 text-[#3d2b1f]'>
+            Subscribe now & get 20% off
+          </h2>
+          <p className='text-lg text-[#3d2b1f] opacity-80 max-w-2xl mx-auto'>
+            Unlock premium fashion at a fraction of the price - join today and save
+          </p>
+        </div>
+        
+        <form onSubmit={onSubmitHandler} className='w-full max-w-md mx-auto'>
+          <div className='flex flex-col sm:flex-row gap-3 bg-white rounded-xl p-2 shadow-lg'>
+            <input 
+              className='flex-1 px-4 py-3 outline-none text-[#3d2b1f] placeholder-gray-400 rounded-lg' 
+              type="email" 
+              placeholder='Enter your email' 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+            <button 
+              type='submit' 
+              className='bg-[#3d2b1f] text-[#fdf7f0] px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#5a3c2c] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap'
+              disabled={isLoading}
+            >
+              {isLoading ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

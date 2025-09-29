@@ -75,7 +75,6 @@ const Login = () => {
         }
 
       } catch (error) {
-        console.log(error)
         toast.error(error.response?.data?.message || error.message || 'An error occurred')
       } finally {
         setIsLoading(false);
@@ -105,7 +104,6 @@ const Login = () => {
         throw new Error(response.data.message);
       }
     } catch (error) {
-      console.log(error);
       throw error;
     }
   }
@@ -129,74 +127,76 @@ const Login = () => {
   }
 
   return (
-    <form onSubmit={onSubmitHandler} className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-14 gap-4 text-gray-800'>
-        <div className='inline-flex items-center gap-2 mb-2 mt-10'>
-            <p className='prata-regular text-3xl'>{currentState}</p>
-            <hr className='border-none h-[1.5px] w-8 bg-gray-800' />
-        </div>
-        
-        {currentState === 'Sign Up' && (
+    <div className='bg-[#fdf7f0] min-h-screen flex items-center justify-center'>
+      <form onSubmit={onSubmitHandler} className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-14 gap-4 text-[#3d2b1f] bg-white p-8 rounded-lg shadow-lg'>
+          <div className='inline-flex items-center gap-2 mb-2 mt-10'>
+              <p className='prata-regular text-3xl text-[#3d2b1f]'>{currentState}</p>
+              <hr className='border-none h-[1.5px] w-8 bg-[#3d2b1f]' />
+          </div>
+          
+          {currentState === 'Sign Up' && (
+            <div className='w-full'>
+              <input 
+                onChange={(e)=>setName(e.target.value)} 
+                value={name} 
+                type="text" 
+                className='w-full px-3 py-2 border border-[#e8dccf] bg-[#fdf7f0] text-[#3d2b1f] placeholder-[#3d2b1f] placeholder-opacity-60' 
+                placeholder='Full Name' 
+                required
+              />
+            </div>
+          )}
+          
           <div className='w-full'>
             <input 
-              onChange={(e)=>setName(e.target.value)} 
-              value={name} 
-              type="text" 
-              className='w-full px-3 py-2 border border-gray-800' 
-              placeholder='Full Name' 
+              onChange={(e)=>setEmail(e.target.value)} 
+              value={email} 
+              type="email" 
+              className='w-full px-3 py-2 border border-[#e8dccf] bg-[#fdf7f0] text-[#3d2b1f] placeholder-[#3d2b1f] placeholder-opacity-60' 
+              placeholder='Email (@iitb.ac.in)' 
               required
             />
+            {currentState === 'Sign Up' && (
+              <p className='text-xs text-[#3d2b1f] opacity-60 mt-1'>Only IIT Bombay email addresses are allowed</p>
+            )}
           </div>
-        )}
-        
-        <div className='w-full'>
-          <input 
-            onChange={(e)=>setEmail(e.target.value)} 
-            value={email} 
-            type="email" 
-            className='w-full px-3 py-2 border border-gray-800' 
-            placeholder='Email (@iitb.ac.in)' 
-            required
-          />
-          {currentState === 'Sign Up' && (
-            <p className='text-xs text-gray-500 mt-1'>Only IIT Bombay email addresses are allowed</p>
-          )}
-        </div>
-        
-        <div className='w-full'>
-          <input 
-            onChange={(e)=>setPassword(e.target.value)} 
-            value={password} 
-            type="password" 
-            className='w-full px-3 py-2 border border-gray-800' 
-            placeholder='Password' 
-            required
-          />
-          {currentState === 'Sign Up' && (
-            <p className='text-xs text-gray-500 mt-1'>Password must be at least 8 characters long</p>
-          )}
-        </div>
-        
-        <div className='w-full flex justify-between text-sm mt-[-8px]'>
-            <p className='cursor-pointer text-gray-500'>Forgot your password?</p>
-            {
-              currentState === 'Login' 
-              ? <p onClick={()=>setCurrentState('Sign Up')} className='cursor-pointer text-blue-600 hover:text-blue-800'>Create account</p>
-              : <p onClick={()=>setCurrentState('Login')} className='cursor-pointer text-blue-600 hover:text-blue-800'>Login Here</p>
-            }
-        </div>
-        
-        <button 
-          type="submit"
-          disabled={isLoading}
-          className={`w-full px-8 py-2 mt-4 ${
-            isLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-black hover:bg-gray-800'
-          } text-white font-light transition-colors`}
-        >
-          {isLoading ? 'Processing...' : (currentState === 'Login' ? 'Sign In' : 'Send OTP')}
-        </button>
-    </form>
+          
+          <div className='w-full'>
+            <input 
+              onChange={(e)=>setPassword(e.target.value)} 
+              value={password} 
+              type="password" 
+              className='w-full px-3 py-2 border border-[#e8dccf] bg-[#fdf7f0] text-[#3d2b1f] placeholder-[#3d2b1f] placeholder-opacity-60' 
+              placeholder='Password' 
+              required
+            />
+            {currentState === 'Sign Up' && (
+              <p className='text-xs text-[#3d2b1f] opacity-60 mt-1'>Password must be at least 8 characters long</p>
+            )}
+          </div>
+          
+          <div className='w-full flex justify-between text-sm mt-[-8px]'>
+              <p className='cursor-pointer text-[#3d2b1f] opacity-60'>Forgot your password?</p>
+              {
+                currentState === 'Login' 
+                ? <p onClick={()=>setCurrentState('Sign Up')} className='cursor-pointer text-[#5a3c2c] hover:text-[#3d2b1f] transition-colors'>Create account</p>
+                : <p onClick={()=>setCurrentState('Login')} className='cursor-pointer text-[#5a3c2c] hover:text-[#3d2b1f] transition-colors'>Login Here</p>
+              }
+          </div>
+          
+          <button 
+            type="submit"
+            disabled={isLoading}
+            className={`w-full px-8 py-2 mt-4 ${
+              isLoading 
+                ? 'bg-[#e8dccf] cursor-not-allowed text-[#3d2b1f] opacity-60' 
+                : 'bg-[#3d2b1f] hover:bg-[#5a3c2c] text-[#fdf7f0]'
+            } font-light transition-colors rounded`}
+          >
+            {isLoading ? 'Processing...' : (currentState === 'Login' ? 'Sign In' : 'Send OTP')}
+          </button>
+      </form>
+    </div>
   )
 }
 

@@ -50,7 +50,6 @@ const OTPVerification = ({ email, onSuccess, onBack, onResend }) => {
         toast.error(response.data.message)
       }
     } catch (error) {
-      console.log(error)
       toast.error(error.response?.data?.message || 'OTP verification failed')
     } finally {
       setIsLoading(false)

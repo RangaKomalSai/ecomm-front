@@ -7,11 +7,15 @@ import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faStar } from '@fortawesome/free-solid-svg-icons'
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons'
+import PricingDisplay from '../components/PricingDisplay'
+import SubscriptionBadge from '../components/SubscriptionBadge'
+import UpgradeBanner from '../components/UpgradeBanner'
+import WishlistButton from '../components/WishlistButton'
 
 const Product = () => {
 
   const { productId } = useParams();
-  const { products, currency, navigate, token, addToCart } = useContext(ShopContext);
+  const { products, currency, navigate, token, addToCart, userType, subscriptionBenefits } = useContext(ShopContext);
   const [productData, setProductData] = useState(false);
   const [image, setImage] = useState('')
   const [rentalDays, setRentalDays] = useState(2)
@@ -89,7 +93,7 @@ const Product = () => {
   }
 
   return productData ? (
-    <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
+    <div className='border-t-2 border-[#e8dccf] pt-10 transition-opacity ease-in duration-500 opacity-100 bg-[#fdf7f0] text-[#3d2b1f]'>
       {/*----------- Product Data-------------- */}
       <div className='flex gap-12 sm:gap-12 flex-col sm:flex-row'>
 
@@ -98,22 +102,27 @@ const Product = () => {
           <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
               {
                 productData.image.map((item,index)=>(
-                  <img onClick={()=>setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
+                  <img onClick={()=>setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" draggable={false} />
                 ))
               }
           </div>
           <div className='w-full sm:w-[80%]'>
-              <img className='w-full h-auto' src={image} alt="" />
+              <img className='w-full h-auto' src={image} alt="" draggable={false} />
           </div>
         </div>
 
         {/* -------- Product Info ---------- */}
         <div className='flex-1'>
-          <div className='flex items-center gap-2 mb-2'>
-            <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
-            <span className='bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium mt-2'>
-              Pristine Promise
-            </span>
+          <div className='flex items-center justify-between mb-2'>
+            <div className='flex items-center gap-2'>
+              <h1 className='font-medium text-2xl mt-2 text-[#3d2b1f]'>{productData.name}</h1>
+              <span className='bg-[#e8dccf] text-[#3d2b1f] text-xs px-2 py-1 rounded-full font-medium mt-2'>
+                Pristine Promise
+              </span>
+            </div>
+            {token && (
+              <WishlistButton productId={productData._id} size="md" />
+            )}
           </div>
           
           <div className=' flex items-center gap-1 mt-2'>
@@ -126,41 +135,27 @@ const Product = () => {
           </div>
 
           <div className='mt-5'>
-            {productData.isFree ? (
-              <div className='flex items-center gap-3'>
-                <p className='text-3xl font-medium text-green-600'>Free</p>
-                {productData.originalPrice && (
-                  <div className='flex items-center gap-2'>
-                    <span className='text-lg text-gray-400 line-through'>{currency}{productData.originalPrice}</span>
-                    <span className='text-sm bg-green-100 text-green-600 px-2 py-1 rounded'>{productData.discountType}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className='flex items-center gap-3'>
-                <p className='text-3xl font-medium'>{currency}{productData.rentalPricePerDay}<span className='text-base font-normal text-gray-500'>/day</span></p>
-                {productData.discountType && productData.originalPrice && productData.originalPrice > productData.rentalPricePerDay && (
-                  <div className='flex items-center gap-2'>
-                    <span className='text-lg text-gray-400 line-through'>{currency}{productData.originalPrice}</span>
-                    <span className='text-sm bg-red-100 text-red-600 px-2 py-1 rounded'>{productData.discountType}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            <PricingDisplay 
+              product={productData}
+              size="large"
+              showOriginalPrice={true}
+              showSubscriptionBadge={true}
+              showMRP={true}
+            />
           </div>
 
-          <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
+          <p className='mt-5 text-[#3d2b1f] opacity-80 md:w-4/5'>{productData.description}</p>
 
           {/* Owner Info */}
-          <div className='bg-gray-50 p-4 rounded-lg mt-5'>
-            <h3 className='font-medium text-sm mb-2'>Owner Information</h3>
+          <div className='bg-[#f5ece3] p-4 rounded-lg mt-5'>
+            <h3 className='font-medium text-sm mb-2 text-[#3d2b1f]'>Owner Information</h3>
             <div className='flex items-center gap-3'>
-              <div className='w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center'>
-                <span className='text-xs font-medium'>{(productData.ownerName || 'VR')[0]}</span>
+              <div className='w-8 h-8 bg-[#e8dccf] rounded-full flex items-center justify-center'>
+                <span className='text-xs font-medium text-[#3d2b1f]'>{(productData.ownerName || 'VR')[0]}</span>
               </div>
               <div>
-                <p className='text-sm font-medium'>{productData.ownerName || 'Vesper Rental'}</p>
-                <p className='text-xs text-gray-500'>Verified Owner</p>
+                <p className='text-sm font-medium text-[#3d2b1f]'>{productData.ownerName || 'Vesper Rental'}</p>
+                <p className='text-xs text-[#3d2b1f] opacity-60'>Verified Owner</p>
               </div>
             </div>
           </div>
@@ -232,6 +227,17 @@ const Product = () => {
           >
             ADD TO CART
           </button>
+
+          {/* Upgrade Banner for Free Users */}
+          {userType === 'free' && (
+            <div className='mt-6'>
+              <UpgradeBanner 
+                product={productData}
+                showSavings={true}
+                compact={false}
+              />
+            </div>
+          )}
           
           <hr className='mt-8 sm:w-4/5' />
           <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
@@ -257,7 +263,10 @@ const Product = () => {
 
       {/* --------- display related products ---------- */}
 
-      <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
+      <RelatedProducts 
+        category={productData.filters?.find(f => f.type === 'category')?.value} 
+        subCategory={productData.filters?.find(f => f.type === 'subCategory')?.value} 
+      />
 
     </div>
   ) : <div className=' opacity-0'></div>
