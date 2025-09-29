@@ -46,3 +46,49 @@ a.active hr{
         color: var(--button-text);
     }
   }
+
+  /* Enhanced dropdown animations */
+  .dropdown-menu {
+    z-index: 1000;
+    transform: translateY(-10px);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .group:hover .dropdown-menu {
+    transform: translateY(0);
+  }
+  
+  /* Smooth hover effects for dropdown items */
+  .group\/item:hover {
+    transform: translateX(4px);
+  }
+  
+  /* Custom scrollbar for dropdown if needed */
+  .dropdown-menu::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--secondary-bg);
+    border-radius: 2px;
+  }
+
+  /* Hero section animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out;
+  }

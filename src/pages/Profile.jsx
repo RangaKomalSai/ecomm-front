@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { useNavigate } from 'react-router-dom'
-import { assets } from '../assets/assets'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingCart, faStar, faCrown, faUser, faMoneyBillWave, faHistory } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingCart, faCrown, faUser, faMoneyBillWave, faHistory } from '@fortawesome/free-solid-svg-icons'
 import SubscriptionBadge from '../components/SubscriptionBadge'
 
 const Profile = () => {
@@ -53,7 +52,6 @@ const Profile = () => {
         }
       }
     } catch (error) {
-      console.error('Profile fetch error:', error)
       setError('Failed to load profile data')
       toast.error('Failed to fetch profile data')
     } finally {
@@ -84,7 +82,6 @@ const Profile = () => {
         toast.success('Profile updated successfully')
       }
     } catch (error) {
-      console.error('Profile update error:', error)
       toast.error('Failed to update profile')
     }
   }

@@ -15,6 +15,7 @@ const Cart = () => {
   const [products, setProducts] = useState([])
   const [isNavigating, setIsNavigating] = useState(false)
   const [cartTotal, setCartTotal] = useState({})
+  const [forceUpdate, setForceUpdate] = useState(0)
   const navigate = useNavigate()
 
   // Use local cartItems for non-logged-in users, backend cartData for logged-in users
@@ -104,6 +105,7 @@ const Cart = () => {
       // If logged in, also update backend
       if (token) {
         await axios.post(backendUrl + '/api/cart/update', { itemId, rentalData: newRentalData }, { headers: { token } })
+        
         // Update local cartData state immediately
         setCartData(prev => ({
           ...prev,
@@ -112,6 +114,21 @@ const Cart = () => {
             rentalData: newRentalData
           }
         }))
+        
+        // Force re-render to update calculations
+        setForceUpdate(prev => prev + 1)
+        
+        // Reload cart data to get updated pricing from backend
+        const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } })
+        if (response.data.success) {
+          setCartData(response.data.cartData)
+          if (response.data.cartTotal) {
+            setCartTotal(response.data.cartTotal)
+          }
+        }
+      } else {
+        // For non-logged-in users, force re-render
+        setForceUpdate(prev => prev + 1)
       }
       
       toast.success('Rental details updated')
@@ -125,21 +142,66 @@ const Cart = () => {
   }
 
   const calculateTotal = () => {
-    // Use cartTotal from backend if available and user is logged in, otherwise calculate locally
-    if (token && cartTotal.totalPrice !== undefined) {
-      return cartTotal.totalPrice
-    }
-    
     let total = 0
     for (const itemKey in displayCartData) {
       if (displayCartData[itemKey] && displayCartData[itemKey].rentalData) {
-        total += displayCartData[itemKey].rentalData.totalPrice
+        const product = getProductDetails(displayCartData[itemKey].itemId)
+        const rentalDays = displayCartData[itemKey].rentalData.rentalDays || 1
+        
+        if (product) {
+          // Use the subscription-adjusted price
+          const currentPricePerDay = product.rentalPricePerDay || 0
+          total += currentPricePerDay * rentalDays
+        }
       }
     }
     return total
   }
 
-  const handleCheckout = () => {
+  const calculateSubtotal = () => {
+    let total = 0
+    for (const itemKey in displayCartData) {
+      if (displayCartData[itemKey] && displayCartData[itemKey].rentalData) {
+        const product = getProductDetails(displayCartData[itemKey].itemId)
+        const rentalDays = displayCartData[itemKey].rentalData.rentalDays || 1
+        
+        if (product) {
+          // Subtotal should be original rental price * rental days (before subscription benefits)
+          const originalPricePerDay = product.originalPrice || product.rentalPricePerDay || 0
+          total += originalPricePerDay * rentalDays
+        }
+      }
+    }
+    return total
+  }
+
+  const calculateDiscount = () => {
+    let discount = 0
+    for (const itemKey in displayCartData) {
+      if (displayCartData[itemKey] && displayCartData[itemKey].rentalData) {
+        const product = getProductDetails(displayCartData[itemKey].itemId)
+        const rentalDays = displayCartData[itemKey].rentalData.rentalDays || 1
+        
+        if (product) {
+          // Get the original price (before subscription benefits)
+          const originalPricePerDay = product.originalPrice || product.rentalPricePerDay || 0
+          const currentPricePerDay = product.rentalPricePerDay || 0
+          
+          // Calculate discount based on subscription benefits
+          if (product.isFree) {
+            // For free items, discount is the full original price
+            discount += originalPricePerDay * rentalDays
+          } else if (originalPricePerDay > currentPricePerDay) {
+            // For discounted items, discount is the difference
+            discount += (originalPricePerDay - currentPricePerDay) * rentalDays
+          }
+        }
+      }
+    }
+    return discount
+  }
+
+  const handleCheckout = async () => {
     if (Object.keys(displayCartData).length === 0) {
       toast.error('Your cart is empty')
       return
@@ -153,10 +215,41 @@ const Cart = () => {
     }
     
     setIsNavigating(true)
-    // Add a small delay for smooth transition
-    setTimeout(() => {
-      navigate('/place-order')
-    }, 300)
+    
+    try {
+      // First, ensure all local cart changes are saved to backend
+      for (const itemKey in displayCartData) {
+        if (displayCartData[itemKey] && displayCartData[itemKey].rentalData) {
+          await axios.post(backendUrl + '/api/cart/update', { 
+            itemId: displayCartData[itemKey].itemId, 
+            rentalData: displayCartData[itemKey].rentalData 
+          }, { headers: { token } })
+        }
+      }
+      
+      // Then fetch the updated cart data from backend
+      const response = await axios.post(backendUrl + '/api/cart/get', {}, { headers: { token } })
+      if (response.data.success) {
+        // Update local cart data with latest from backend
+        setCartData(response.data.cartData)
+        if (response.data.cartTotal) {
+          setCartTotal(response.data.cartTotal)
+        }
+        // Cart data is saved and synchronized, proceed to checkout
+        navigate('/place-order', { 
+          state: { 
+            cartData: response.data.cartData, 
+            cartTotal: response.data.cartTotal 
+          } 
+        })
+      } else {
+        toast.error('Failed to load cart data')
+        setIsNavigating(false)
+      }
+    } catch (error) {
+      toast.error('Failed to sync cart data')
+      setIsNavigating(false)
+    }
   }
 
   return (
@@ -244,13 +337,39 @@ const Cart = () => {
                         <div className='flex items-center gap-4'>
                           <label className='text-sm font-medium'>Rental Duration:</label>
                           <select 
-                            value={item.rentalData.rentalDays}
+                            value={item.rentalData.rentalDays || (() => {
+                              // Calculate rental days from dates if not stored
+                              const start = new Date(item.rentalData.startDate)
+                              const end = new Date(item.rentalData.endDate)
+                              return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+                            })()}
                             onChange={(e) => {
+                              const newRentalDays = parseInt(e.target.value)
+                              const startDate = new Date(item.rentalData.startDate)
+                              const endDate = new Date(startDate.getTime() + (newRentalDays - 1) * 24 * 60 * 60 * 1000)
+                              
+                              // Get the current product pricing (considering subscription benefits)
+                              const currentProduct = item.product || product
+                              const pricePerDay = currentProduct.rentalPricePerDay || product.rentalPricePerDay
+                              
                               const newRentalData = {
                                 ...item.rentalData,
-                                rentalDays: parseInt(e.target.value),
-                                totalPrice: product.rentalPricePerDay * parseInt(e.target.value)
+                                rentalDays: newRentalDays,
+                                endDate: endDate.toISOString().split('T')[0],
+                                totalPrice: pricePerDay * newRentalDays
                               }
+                              
+                              // Update local state immediately for real-time updates
+                              if (token) {
+                                setCartData(prev => ({
+                                  ...prev,
+                                  [item.itemId]: {
+                                    ...prev[item.itemId],
+                                    rentalData: newRentalData
+                                  }
+                                }))
+                              }
+                              
                               handleUpdateRentalData(item.itemId, newRentalData)
                             }}
                             className='border px-2 py-1 rounded text-sm'
@@ -271,7 +390,8 @@ const Cart = () => {
                             min={new Date().toISOString().split('T')[0]}
                             onChange={(e) => {
                               const startDate = e.target.value
-                              const endDate = new Date(new Date(startDate).getTime() + (item.rentalData.rentalDays * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
+                              const rentalDays = item.rentalData.rentalDays || 1
+                              const endDate = new Date(new Date(startDate).getTime() + ((rentalDays - 1) * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
                               const newRentalData = {
                                 ...item.rentalData,
                                 startDate,
@@ -290,7 +410,16 @@ const Cart = () => {
                       </div>
 
                       <div className='flex justify-between items-center mt-4'>
-                        <p className='text-lg font-medium'>{currency}{item.rentalData.totalPrice}</p>
+                        <div className='flex items-center gap-2'>
+                          <p className='text-lg font-medium'>
+                            {item.product && item.product.isFree ? 'Free' : `${currency}${item.rentalData.totalPrice || 0}`}
+                          </p>
+                          {item.product && item.product.isFree && item.product.mrp && (
+                            <span className='text-sm text-gray-400 line-through'>
+                              {currency}{item.product.mrp}
+                            </span>
+                          )}
+                        </div>
                         <button 
                           onClick={() => handleRemoveItem(itemKey)}
                           className='text-red-500 hover:text-red-700 text-sm'
@@ -351,12 +480,12 @@ const Cart = () => {
               <div className='space-y-2 mb-4'>
                 <div className='flex justify-between'>
                   <span>Subtotal:</span>
-                  <span>{currency}{calculateTotal()}</span>
+                  <span>{currency}{calculateSubtotal()}</span>
                 </div>
-                {cartTotal.totalDiscount && cartTotal.totalDiscount > 0 && (
+                {calculateDiscount() > 0 && (
                   <div className='flex justify-between text-green-600'>
                     <span>Discount ({userType === 'plus' ? 'Plus' : 'Pro'}):</span>
-                    <span>-{currency}{cartTotal.totalDiscount}</span>
+                    <span>-{currency}{calculateDiscount()}</span>
                   </div>
                 )}
                 <div className='flex justify-between'>
