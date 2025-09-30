@@ -34,21 +34,21 @@ const Hero = () => {
       icon: faLeaf
     },
     {
-      image: assets.hero_img4, // Woman twirling in vibrant dress
+      image: assets.hero_img4, // Woman in printed dress with circular fashion graphics
+      title: "Smarter. Greener. Better.",
+      subtitle: "Each rental means less waste, more wears, and premium fashion that's kind to the planet.",
+      description: "Join the movement redefining how India wears fashion.",
+      tagline: "Look stunning, live sustainably.",
+      icon: faRecycle
+    },
+    {
+      image: assets.hero_img5, // Woman twirling in vibrant dress
       title: "Fashion for Every Mood.",
       subtitle: "From weddings to weekends, parties to casual outings — your wardrobe evolves with you.",
       description: "Discover the joy of endless styles at your fingertips.",
       tagline: "Dress different, every time.",
       icon: faHeart
     },
-    {
-      image: assets.hero_img5, // Woman in printed dress with circular fashion graphics
-      title: "Smarter. Greener. Better.",
-      subtitle: "Each rental means less waste, more wears, and premium fashion that's kind to the planet.",
-      description: "Join the movement redefining how India wears fashion.",
-      tagline: "Look stunning, live sustainably.",
-      icon: faRecycle
-    }
   ]
 
   useEffect(() => {
