@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { assets } from '../assets/assets'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronLeft, faChevronRight, faStar, faBox, faLeaf } from '@fortawesome/free-solid-svg-icons'
+import { faChevronLeft, faChevronRight, faStar, faBox, faLeaf, faHeart, faRecycle } from '@fortawesome/free-solid-svg-icons'
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -32,6 +32,22 @@ const Hero = () => {
       description: "Every rental reduces waste, saves money, and gives premium clothes a longer life.",
       tagline: "Look great. Live sustainably.",
       icon: faLeaf
+    },
+    {
+      image: assets.hero_img4, // Woman twirling in vibrant dress
+      title: "Fashion for Every Mood.",
+      subtitle: "From weddings to weekends, parties to casual outings — your wardrobe evolves with you.",
+      description: "Discover the joy of endless styles at your fingertips.",
+      tagline: "Dress different, every time.",
+      icon: faHeart
+    },
+    {
+      image: assets.hero_img5, // Woman in printed dress with circular fashion graphics
+      title: "Smarter. Greener. Better.",
+      subtitle: "Each rental means less waste, more wears, and premium fashion that's kind to the planet.",
+      description: "Join the movement redefining how India wears fashion.",
+      tagline: "Look stunning, live sustainably.",
+      icon: faRecycle
     }
   ]
 
@@ -76,91 +92,87 @@ const Hero = () => {
       {/* Full Width Carousel Container */}
       <div className='flex transition-transform duration-500 ease-in-out h-full' style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
         {slides.map((slide, index) => (
-          <div key={index} className='w-full flex-shrink-0 relative h-full'>
-            {/* Background Image with Overlay */}
-            <div className='absolute inset-0'>
+          <div key={index} className='w-full flex-shrink-0 relative h-full flex'>
+            {/* Left Side - Text Content */}
+            <div className='w-full md:w-1/2 flex items-center justify-center bg-[#fdf7f0] p-8 lg:p-12'>
+              <div className='max-w-lg animate-fade-in-up pl-8 md:pl-12 lg:pl-16'>
+                {/* Brand Badge */}
+                <div className='flex items-center gap-3 mb-4'>
+                  <div className='w-12 h-[3px] bg-gradient-to-r from-[#3d2b1f] to-[#8b7355]'></div>
+                  <span className='font-semibold text-sm tracking-wider text-[#3d2b1f] uppercase'>VESPER</span>
+                </div>
+                
+                {/* Main Title */}
+                <h1 className='prata-regular text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-4 text-[#3d2b1f]'>
+                  {slide.title}
+                </h1>
+                
+                {/* Subtitle */}
+                <p className='text-lg lg:text-xl font-medium mb-4 text-[#5a3c2c] leading-relaxed'>
+                  {slide.subtitle}
+                </p>
+                
+                {/* Description */}
+                <p className='text-base lg:text-lg mb-6 text-[#6b4e3d] leading-relaxed'>
+                  {slide.description}
+                </p>
+                
+                {/* Tagline with Icon */}
+                <div className='flex items-center gap-3 mb-8'>
+                  <FontAwesomeIcon 
+                    icon={slide.icon} 
+                    className='w-4 h-4 text-[#3d2b1f]' 
+                  />
+                  <p className='text-base font-semibold text-[#3d2b1f] italic'>
+                    {slide.tagline}
+                  </p>
+                </div>
+                
+                {/* CTA Button */}
+                <div className='flex items-center gap-4'>
+                  <button 
+                    onClick={() => window.location.href = '/collection'}
+                    className='bg-[#3d2b1f] text-white px-6 py-3 rounded-xl hover:bg-[#5a3c2c] transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105'
+                  >
+                    EXPLORE COLLECTION
+                  </button>
+                  <div className='w-16 h-[2px] bg-gradient-to-r from-[#3d2b1f] to-transparent'></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Image */}
+            <div className='hidden md:block w-1/2 relative'>
               <img 
                 className='w-full h-full object-cover' 
                 src={slide.image} 
                 alt={slide.title}
                 draggable={false}
               />
-              {/* Gradient Overlay for better text readability */}
-              <div className='absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent'></div>
-            </div>
-
-            {/* Content Overlay */}
-            <div className='relative z-10 flex items-center h-full'>
-              <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
-                <div className='max-w-2xl lg:max-w-3xl animate-fade-in-up ml-16 sm:ml-20 lg:ml-24'>
-                  {/* Brand Badge */}
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-12 h-[3px] bg-gradient-to-r from-white to-[#e8dccf]'></div>
-                    <span className='font-semibold text-sm tracking-wider text-white uppercase'>VESPER</span>
-                  </div>
-                  
-                  {/* Main Title */}
-                  <h1 className='prata-regular text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-tight mb-4 text-white'>
-                    {slide.title}
-                  </h1>
-                  
-                  {/* Subtitle */}
-                  <p className='text-lg lg:text-xl font-medium mb-4 text-white/90 leading-relaxed'>
-                    {slide.subtitle}
-                  </p>
-                  
-                  {/* Description */}
-                  <p className='text-base lg:text-lg mb-6 text-white/80 leading-relaxed max-w-2xl'>
-                    {slide.description}
-                  </p>
-                  
-                  {/* Tagline with Icon */}
-                  <div className='flex items-center gap-3 mb-8'>
-                    <FontAwesomeIcon 
-                      icon={slide.icon} 
-                      className='w-4 h-4 text-white' 
-                    />
-                    <p className='text-base font-semibold text-white italic'>
-                      {slide.tagline}
-                    </p>
-                  </div>
-                  
-                  {/* CTA Button */}
-                  <div className='flex items-center gap-4'>
-                    <button 
-                      onClick={() => window.location.href = '/collection'}
-                      className='bg-white text-[#3d2b1f] px-6 py-3 rounded-xl hover:bg-[#f5ece3] transition-all duration-300 font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-105'
-                    >
-                      EXPLORE COLLECTION
-                    </button>
-                    <div className='w-16 h-[2px] bg-gradient-to-r from-white to-transparent'></div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         ))}
       </div>
       
-      {/* Navigation Arrows - Enhanced for overlay design */}
+      {/* Navigation Arrows - Positioned to avoid text overlap */}
       <button
         onClick={goToPrevious}
-        className='absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-[#3d2b1f] w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
+        className='absolute left-1/2 md:left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 md:translate-x-0 md:left-4 lg:left-6 bg-[#3d2b1f]/90 hover:bg-[#3d2b1f] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
       >
         <FontAwesomeIcon icon={faChevronLeft} className='w-5 h-5 sm:w-6 sm:h-6' />
       </button>
       
       <button
         onClick={goToNext}
-        className='absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-[#3d2b1f] w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
+        className='absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-[#3d2b1f]/90 hover:bg-[#3d2b1f] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
       >
         <FontAwesomeIcon icon={faChevronRight} className='w-5 h-5 sm:w-6 sm:h-6' />
       </button>
       
       {/* Progress Bar */}
-      <div className='absolute bottom-0 left-0 w-full h-1 bg-white/20 z-30'>
+      <div className='absolute bottom-0 left-0 w-full h-1 bg-[#3d2b1f]/20 z-30'>
         <div 
-          className='h-full bg-white/80 transition-all duration-100 ease-linear'
+          className='h-full bg-[#3d2b1f]/80 transition-all duration-100 ease-linear'
           style={{ width: `${progress}%` }}
         />
       </div>

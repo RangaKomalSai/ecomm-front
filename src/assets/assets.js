@@ -3,6 +3,8 @@ import logo_text from './logo_text.svg'
 import hero_img1 from './hero_img1.png'
 import hero_img2 from './hero_img2.png'
 import hero_img3 from './hero_img3.png'
+import hero_img4 from './hero_img4.png'
+import hero_img5 from './hero_img5.png'
 import cart_icon from './cart.svg'
 import bin_icon from './bin_icon.png'
 import dropdown_icon from './dropdown_icon.png'
@@ -24,6 +26,8 @@ export const assets = {
     hero_img1,
     hero_img2,
     hero_img3,
+    hero_img4,
+    hero_img5,
     cart_icon,
     dropdown_icon,
     profile_icon,

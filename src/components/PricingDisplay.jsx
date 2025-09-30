@@ -48,7 +48,7 @@ const PricingDisplay = ({
             <div className="flex flex-col gap-1">
                 <div className={classes.container}>
                     <span className={classes.price}>
-                        {currency}{product.mrp}
+                        Retail: {currency}{product.mrp}
                     </span>
                 </div>
             </div>
