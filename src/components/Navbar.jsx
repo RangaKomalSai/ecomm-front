@@ -35,8 +35,8 @@ const Navbar = () => {
     <div className='sticky top-0 z-50 flex items-center justify-between py-3 font-medium bg-white/95 backdrop-blur-sm text-[#3d2b1f] shadow-lg border-b border-[#e8dccf] w-screen -ml-[calc(50vw-50%)] px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       
       <Link to='/' onClick={scrollToTop} className='flex items-center gap-3'>
-        <img src={assets.logo_icon} className='h-8' alt="Vesper Icon" draggable={false} />
-        <img src={assets.logo_text} className='h-6' alt="Vesper" draggable={false} />
+        <img src={assets.logo_iconb} className='h-8' alt="Vesper Icon" draggable={false} />
+        <img src={assets.logo_textb} className='h-6' alt="Vesper" draggable={false} />
       </Link>
 
       <ul className='hidden sm:flex gap-4 text-sm md:text-sm lg:text-base text-[#3d2b1f]'>
@@ -176,7 +176,7 @@ const Navbar = () => {
                 {/* Header */}
                 <div className='flex items-center justify-between p-4 border-b border-[#e8dccf] bg-gradient-to-r from-[#f5ece3] to-[#fdf7f0]'>
                     <div className='flex items-center gap-3'>
-                        <img src={assets.logo_icon} className='h-8' alt="Vesper Icon" draggable={false} />
+                        <img src={assets.logo_iconb} className='h-8' alt="Vesper Icon" draggable={false} />
                         <span className='font-bold text-[#3d2b1f]'>Menu</span>
                     </div>
                     <button onClick={()=>setVisible(false)} className='p-2 hover:bg-[#e8dccf] rounded-full transition-colors'>

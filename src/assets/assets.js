@@ -1,5 +1,7 @@
 import logo_icon from './logo_icon1.svg'
 import logo_text from './logo_text.svg'
+import logo_iconb from './logo_iconb.svg'
+import logo_textb from './logo_textb.svg'
 import hero_img1 from './hero_img1.png'
 import hero_img2 from './hero_img2.png'
 import hero_img3 from './hero_img3.png'
@@ -23,6 +25,8 @@ import cross_icon from './cross_icon.png'
 export const assets = {
     logo_icon,
     logo_text,
+    logo_iconb,
+    logo_textb,
     hero_img1,
     hero_img2,
     hero_img3,
