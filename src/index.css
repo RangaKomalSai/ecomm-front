@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Prata&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global color scheme variables */
+:root {
+  --primary-bg: #fdf7f0;
+  --primary-text: #3d2b1f;
+  --secondary-bg: #e8dccf;
+  --footer-bg: #f5ece3;
+  --button-bg: #3d2b1f;
+  --button-hover: #5a3c2c;
+  --button-text: #fdf7f0;
+}
+
+/* Global body styling */
+body {
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+  font-family: 'Outfit', sans-serif;
+}
+
+a.active hr{
+    display: block;
+}
+
+*{
+    font-family: Outfit;
+}
+
+.prata-regular {
+    font-family: "Prata", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  ::-webkit-scrollbar{
+    display: none;
+  }
+  
+  @media (max-width:640px) {
+    a.active{
+        background-color: var(--button-bg);
+        color: var(--button-text);
+    }
+  }
+
+  /* Enhanced dropdown animations */
+  .dropdown-menu {
+    z-index: 1000;
+    transform: translateY(-10px);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .group:hover .dropdown-menu {
+    transform: translateY(0);
+  }
+  
+  /* Smooth hover effects for dropdown items */
+  .group\/item:hover {
+    transform: translateX(4px);
+  }
+  
+  /* Custom scrollbar for dropdown if needed */
+  .dropdown-menu::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--secondary-bg);
+    border-radius: 2px;
+  }
+
+  /* Hero section animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+/* Top banner marquee */
+.top-banner {
+  display: block;
+  width: 100%;
+}
+
+.marquee-wrap {
+  overflow: hidden;
+}
+
+
+.marquee {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  will-change: transform;
+  animation: marquee 14s linear infinite;
+  font-size: 0.95rem;
+}
+
+.marquee__inner {
+  display: flex;
+  gap: 2rem;
+  white-space: nowrap;
+  align-items: center;
+}
+
+/* Pause on hover or focus for accessibility */
+.marquee-wrap:hover .marquee,
+.marquee-wrap:focus-within .marquee {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    animation: none;
+    transform: none;
+    text-align: center;
+  }
+}
