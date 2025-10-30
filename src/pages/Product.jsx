@@ -101,10 +101,11 @@ const Product = () => {
     }
   }, [startDate, rentalDays]);
 
-  // Get minimum date (today)
   const getMinDate = () => {
     const today = new Date();
-    return today.toISOString().split("T")[0];
+    const utcTime = today.getTime();
+    const indiaTime = new Date(utcTime + 5.5 * 60 * 60 * 1000);
+    return indiaTime.toISOString().split("T")[0];
   };
 
   // Get rental price based on duration and subscription
@@ -144,6 +145,11 @@ const Product = () => {
   };
 
   const handleAddToCart = async () => {
+    if (!productData.isAvailable) {
+      toast.error("This product is currently out of stock");
+      return;
+    }
+
     if (!token) {
       toast.error("Please login to add items to cart");
       navigate("/login");
@@ -152,6 +158,12 @@ const Product = () => {
 
     if (!startDate) {
       toast.error("Please select a start date");
+      return;
+    }
+
+    const minDate = getMinDate();
+    if (startDate < minDate) {
+      toast.error("Start date cannot be in the past");
       return;
     }
 
@@ -170,8 +182,12 @@ const Product = () => {
     // Determine effective rental duration
     const effectiveDays = ["plus", "pro"].includes(planLevel) ? 14 : rentalDays;
 
-    // Add to cart - backend expects: productId, size, duration
-    await addToCart(productData._id, selectedSize, effectiveDays, startDate);
+    try {
+      await addToCart(productData._id, selectedSize, effectiveDays, startDate);
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error("Failed to add to cart. Please try again.");
+    }
   };
 
   // Loading state
@@ -411,6 +427,11 @@ const Product = () => {
                 ? "bg-[#3d2b1f] text-white hover:bg-[#5a3c2c] active:scale-95"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
+            aria-label={
+              productData.isAvailable
+                ? `Add ${productData.name} to cart for ₹${getRentalPrice()}`
+                : "Out of stock - cannot add to cart"
+            }
           >
             {productData.isAvailable ? "ADD TO CART" : "OUT OF STOCK"}
           </button>
