@@ -56,16 +56,23 @@ const PricingDisplay = ({
   const { displayPrice, originalPrice, durationText, badge, discount } =
     pricingResult;
 
-  // If showRentalPrice is false, show MRP instead (for collection pages)
+  // If showRentalPrice is false, show "Starts from" with rental price and MRP below (for collection pages)
   if (!showRentalPrice) {
+    const startingPrice = product.twoDayRentalPrice || 0;
     return (
       <div className="flex flex-col gap-1">
         <div className={classes.container}>
           <span className={classes.price}>
-            Retail: {currency}
-            {product.mrp}
+            Starts from {currency}
+            {startingPrice}
           </span>
         </div>
+        {product.mrp && (
+          <div className="text-xs text-gray-500">
+            Retail: {currency}
+            {product.mrp}
+          </div>
+        )}
       </div>
     );
   }

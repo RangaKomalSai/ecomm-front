@@ -89,8 +89,8 @@ const ShopContextProvider = ({ children }) => {
           url.includes("/register") ||
           url.includes("/verify-otp");
 
-        // Only logout for non-auth 401 errors
-        if (!isLoggingOut.current) {
+        // Only logout for non-auth 401 errors (don't logout on login/register failures)
+        if (!isAuthOperation && !isLoggingOut.current) {
           toast.error("Session expired. Please login again.");
           logoutUser();
         }
@@ -440,6 +440,17 @@ const ShopContextProvider = ({ children }) => {
         return { success: false, message: "Start date is required" };
       }
 
+      // Check if product is already in cart (only one quantity allowed per product)
+      const productAlreadyInCart = cart.some((item) => {
+        const itemProductId = item.product?._id;
+        return itemProductId?.toString() === productId?.toString();
+      });
+
+      if (productAlreadyInCart) {
+        toast.error("This product is already in your cart");
+        return { success: false, message: "Product already in cart" };
+      }
+
       setLoading(true);
       const res = await axiosInstance.post("/cart/add", {
         productId,
@@ -619,12 +630,13 @@ const ShopContextProvider = ({ children }) => {
 
   // ShopContext.jsx
 
-  const createBooking = async (cartItems, address, couponOverride) => {
+  const createBooking = async (cartItems, address, couponOverride, insuranceSelected) => {
     try {
       setLoading(true);
       const payload = { cartItems, address };
       const couponToSend = couponOverride || couponCode;
       if (couponToSend) payload.couponCode = couponToSend;
+      if (insuranceSelected !== undefined) payload.insuranceSelected = Boolean(insuranceSelected);
 
       const res = await axiosInstance.post("/booking/create", payload);
 
@@ -639,6 +651,7 @@ const ShopContextProvider = ({ children }) => {
           },
           bookingId: res.data.bookingId,
           deliveryFee: res.data.deliveryFee,
+          insuranceAmount: res.data.insuranceAmount || 0,
           totalPrice: res.data.totalPrice,
         };
       } else {
@@ -655,12 +668,15 @@ const ShopContextProvider = ({ children }) => {
     }
   };
 
-  const verifyBooking = async (payload) => {
+  const verifyBooking = async (payload, insuranceSelected) => {
     try {
       setLoading(true);
 
       // payload may include bookingId (if booking was pre-created) OR
       // include cartItems + address when booking is created after payment.
+      if (insuranceSelected !== undefined) {
+        payload.insuranceSelected = Boolean(insuranceSelected);
+      }
       const res = await axiosInstance.post("/booking/verify", payload);
 
       if (res.data.success) {

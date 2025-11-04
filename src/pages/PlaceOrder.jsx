@@ -44,6 +44,7 @@ const PlaceOrder = () => {
   });
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [insuranceSelected, setInsuranceSelected] = useState(false);
 
   // Store bookingId in ref
   const bookingIdRef = useRef(null);
@@ -179,11 +180,12 @@ const PlaceOrder = () => {
         endDate: item.endDate,
       }));
 
-      // Create booking order (include coupon if applied)
+      // Create booking order (include coupon if applied and insurance if selected)
       const bookingResponse = await createBooking(
         cartItems,
         address,
-        couponCode
+        couponCode,
+        insuranceSelected
       );
 
       if (!bookingResponse.success) {
@@ -294,7 +296,7 @@ const PlaceOrder = () => {
       }
 
       // ✅ Send to backend for verification (will create booking if needed)
-      const result = await verifyBooking(payload);
+      const result = await verifyBooking(payload, insuranceSelected);
 
       if (result.success) {
         bookingIdRef.current = null;
@@ -521,11 +523,48 @@ const PlaceOrder = () => {
                 })}
               </div>
 
+              {/* Insurance Option */}
+              <div className="pt-4 border-t-2 border-[#e8dccf] mb-4">
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={insuranceSelected}
+                    onChange={(e) => setInsuranceSelected(e.target.checked)}
+                    className="w-5 h-5 text-[#3d2b1f] border-gray-300 rounded focus:ring-[#3d2b1f]"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-[#3d2b1f]">
+                        Add Insurance Coverage
+                      </span>
+                      <span className="text-sm font-semibold text-[#3d2b1f]">
+                        ₹{Math.round(((cartTotal || 0) - (couponDiscount || 0)) * 0.1 * 100) / 100}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Protect your rental items (10% of rental cost)
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               {/* Totals */}
               <div className="pt-4 border-t-2 border-[#e8dccf] space-y-2 mb-6">
                 <div className="flex justify-between text-gray-700">
                   <span>Subtotal</span>
                   <span>₹{cartTotal || 0}</span>
+                </div>
+
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>- ₹{couponDiscount}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-gray-700">
+                  <span>Subtotal After Discount</span>
+                  <span>₹{Math.round(((cartTotal || 0) - (couponDiscount || 0)) * 100) / 100}</span>
                 </div>
 
                 <div className="flex justify-between text-gray-700">
@@ -537,10 +576,10 @@ const PlaceOrder = () => {
                   </span>
                 </div>
 
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Coupon Discount</span>
-                    <span>- ₹{couponDiscount}</span>
+                {insuranceSelected && (
+                  <div className="flex justify-between text-gray-700">
+                    <span>Insurance (10%)</span>
+                    <span>₹{Math.round(((cartTotal || 0) - (couponDiscount || 0)) * 0.1 * 100) / 100}</span>
                   </div>
                 )}
 
@@ -548,10 +587,10 @@ const PlaceOrder = () => {
                   <span>Total Amount</span>
                   <span>
                     ₹
-                    {cartTotalWithDelivery ||
-                      (couponDiscount > 0
-                        ? (cartTotal || 0) - couponDiscount + (deliveryFee || 0)
-                        : (cartTotal || 0) + (deliveryFee || 0))}
+                    {Math.round(
+                      ((cartTotal || 0) - (couponDiscount || 0) + (deliveryFee || 0) + 
+                       (insuranceSelected ? Math.round(((cartTotal || 0) - (couponDiscount || 0)) * 0.1 * 100) / 100 : 0)) * 100
+                    ) / 100}
                   </span>
                 </div>
               </div>
