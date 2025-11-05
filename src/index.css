@@ -4,6 +4,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force light mode - override browser dark mode preference */
+:root {
+  color-scheme: light;
+}
+
+html {
+  color-scheme: light;
+}
+
+/* Override any dark mode styles - force light colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+  }
+  
+  html {
+    color-scheme: light;
+  }
+  
+  body {
+    background-color: var(--primary-bg) !important;
+    color: var(--primary-text) !important;
+  }
+  
+  /* Force light colors for all elements in dark mode */
+  * {
+    color-scheme: light;
+  }
+}
+
 /* Global color scheme variables */
 :root {
   --primary-bg: #fdf7f0;
