@@ -380,27 +380,18 @@ const Profile = () => {
                       </p>
                     </div>
 
-                    {/* Phone */}
+                    {/* Phone (non-editable like email) */}
                     <div>
                       <label className="block text-sm font-medium text-[#3d2b1f] mb-2">
                         <FontAwesomeIcon icon={faPhone} className="mr-2" />
                         Phone Number
                       </label>
-                      {isEditing ? (
-                        <input
-                          type="tel"
-                          value={editForm.phone}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, phone: e.target.value })
-                          }
-                          className="w-full px-4 py-3 border-2 border-[#e8dccf] rounded-lg focus:border-[#3d2b1f] focus:outline-none"
-                          placeholder="Enter your phone number"
-                        />
-                      ) : (
-                        <p className="px-4 py-3 bg-[#fdf7f0] rounded-lg text-[#3d2b1f]">
-                          {user.phone || "Not provided"}
-                        </p>
-                      )}
+                      <p className="px-4 py-3 bg-gray-100 rounded-lg text-gray-600">
+                        {user.phone || "Not provided"}
+                        <span className="ml-2 text-xs text-gray-500">
+                          (Cannot be changed)
+                        </span>
+                      </p>
                     </div>
 
                     {/* Address */}

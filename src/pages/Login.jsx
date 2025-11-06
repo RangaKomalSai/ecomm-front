@@ -17,6 +17,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Validate password strength
   const validatePassword = (password) => {
@@ -28,7 +29,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      if (currentState === "Sign Up") {
+        if (currentState === "Sign Up") {
         // Validate password strength
         if (!validatePassword(password)) {
           toast.error("Password must be at least 8 characters long");
@@ -36,12 +37,18 @@ const Login = () => {
           return;
         }
 
+        if (!phone || phone.trim().length < 10) {
+          toast.error("Please enter a valid phone number");
+          setIsLoading(false);
+          return;
+        }
+
         // Send OTP for registration using context function
-        const response = await registerUser(name, email, password);
+        const response = await registerUser(name, email, password, phone);
 
         if (response.success) {
           setOtpSent(true);
-          setOtpData({ name, email, password });
+          setOtpData({ name, email, password, phone });
           // Toast is already shown in context
         }
       } else {
@@ -79,7 +86,8 @@ const Login = () => {
     const response = await registerUser(
       otpData.name,
       otpData.email,
-      otpData.password
+      otpData.password,
+      otpData.phone
     );
 
     if (!response.success) {
@@ -130,6 +138,22 @@ const Login = () => {
               className="w-full px-4 py-3 border-2 border-[#e8dccf] rounded-lg bg-[#fdf7f0] text-[#3d2b1f] placeholder-[#3d2b1f] placeholder-opacity-60 focus:border-[#3d2b1f] focus:outline-none transition-colors"
               placeholder="Enter your full name"
               required
+            />
+          </div>
+        )}
+
+        {currentState === "Sign Up" && (
+          <div className="w-full">
+            <label className="text-sm font-medium text-[#3d2b1f] mb-1 block">
+              Phone Number
+            </label>
+            <input
+              onChange={(e) => setPhone(e.target.value)}
+              value={phone}
+              type="tel"
+              className="w-full px-4 py-3 border-2 border-[#e8dccf] rounded-lg bg-[#fdf7f0] text-[#3d2b1f] placeholder-[#3d2b1f] placeholder-opacity-60 focus:border-[#3d2b1f] focus:outline-none transition-colors"
+              placeholder="Enter your phone number"
+              required={currentState === "Sign Up"}
             />
           </div>
         )}

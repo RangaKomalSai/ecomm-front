@@ -100,13 +100,14 @@ const ShopContextProvider = ({ children }) => {
   );
 
   // AUTHENTICATION FUNCTIONS
-  const registerUser = async (name, email, password) => {
+  const registerUser = async (name, email, password, phone) => {
     try {
       setLoading(true);
       const res = await axiosInstance.post("/user/register", {
         name,
         email,
         password,
+        phone,
       });
 
       if (res.data.success) {
@@ -468,6 +469,10 @@ const ShopContextProvider = ({ children }) => {
         return { success: false, message: res.data.message };
       }
     } catch (error) {
+      // If unauthorized, let the response interceptor handle logout and avoid duplicate toasts
+      if (error.response?.status === 401) {
+        return { success: false, message: "Logout and Login again" };
+      }
       const errorMsg = error.response?.data?.message || "Error adding to cart";
       toast.error(errorMsg);
       return { success: false, message: errorMsg };

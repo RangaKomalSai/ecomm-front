@@ -4,6 +4,9 @@ import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import RelatedProducts from "../components/RelatedProducts";
 import { toast } from "react-toastify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
@@ -309,10 +312,13 @@ const Product = () => {
             />
           </div>
 
-          {/* Description */}
-          <p className="mt-5 text-[#3d2b1f] opacity-80 md:w-4/5 leading-relaxed">
-            {productData.description}
-          </p>
+          {/* Description - render Markdown (supports bold/italics/links) and preserve line breaks */}
+          <div className="mt-5 text-[#3d2b1f] opacity-80 md:w-4/5 leading-relaxed">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              children={productData.description || ""}
+            />
+          </div>
 
           {/* Pristine Promise */}
           <div className="bg-gradient-to-r from-[#f5ece3] to-[#fdf7f0] p-4 rounded-lg mt-5 border border-[#e8dccf]">
