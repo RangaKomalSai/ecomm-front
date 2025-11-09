@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Collection from "./pages/Collection";
 import About from "./pages/About";
@@ -25,6 +25,15 @@ import "react-toastify/dist/ReactToastify.css";
 import Verify from "./pages/Verify";
 
 const App = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // When the route changes, push the pageview to Google Analytics
+    gtag('config', 'G-BY8T0N5VCJ', {
+      page_path: location.pathname + location.search,
+    });
+  }, [location]);
+  
   return (
     <div className="bg-[#fdf7f0] text-[#3d2b1f] min-h-screen px-4 sm:px-[2vw] md:px-[4vw] lg:px-[5vw]">
       <ToastContainer
