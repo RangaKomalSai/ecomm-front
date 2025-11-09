@@ -54,7 +54,7 @@ const Contact = () => {
                 </div> */}
                 <div className='flex items-start gap-3'>
                   <FontAwesomeIcon icon={faPhone} className='w-5 h-5 text-[#8b4513] mt-1' />
-                  <p className='text-[#3d2b1f] opacity-80'>+91 93710 25117</p>
+                  <p className='text-[#3d2b1f] opacity-80'>+91 81692 29349</p>
                 </div>
                 <div className='flex items-start gap-3'>
                   <FontAwesomeIcon icon={faEnvelope} className='w-5 h-5 text-[#8b4513] mt-1' />
