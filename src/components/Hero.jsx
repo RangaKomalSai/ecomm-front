@@ -85,7 +85,7 @@ const Hero = () => {
 
   return (
     <div 
-      className='relative bg-[#fdf7f0] overflow-hidden w-screen -ml-[calc(50vw-50%)] h-screen'
+      className='relative bg-[#fdf7f0] overflow-hidden w-screen -ml-[calc(50vw-50%)] h-[calc(100vh-140px)]'
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -154,19 +154,21 @@ const Hero = () => {
         ))}
       </div>
       
-      {/* Navigation Arrows - Positioned to avoid text overlap */}
+      {/* Navigation Arrows - Outlined style, smaller on mobile */}
       <button
         onClick={goToPrevious}
-        className='absolute left-1/2 md:left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 md:translate-x-0 md:left-4 lg:left-6 bg-[#3d2b1f]/90 hover:bg-[#3d2b1f] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
+        style={{ backgroundColor: 'transparent', borderColor: '#3d2b1f', color: '#3d2b1f' }}
+        className='absolute left-1/2 md:left-1/2 top-1/2 transform -translate-y-1/2 -translate-x-1/2 md:translate-x-0 md:left-4 lg:left-6 border-2 bg-transparent hover:bg-[#3d2b1f]/10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg backdrop-blur-sm z-20'
       >
-        <FontAwesomeIcon icon={faChevronLeft} className='w-5 h-5 sm:w-6 sm:h-6' />
+        <FontAwesomeIcon icon={faChevronLeft} className='w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5' style={{ color: '#3d2b1f' }} />
       </button>
       
       <button
         onClick={goToNext}
-        className='absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-[#3d2b1f]/90 hover:bg-[#3d2b1f] text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xl backdrop-blur-sm z-20'
+        style={{ backgroundColor: 'transparent', borderColor: '#3d2b1f', color: '#3d2b1f' }}
+        className='absolute right-2 sm:right-4 md:right-6 top-1/2 transform -translate-y-1/2 border-2 bg-transparent hover:bg-[#3d2b1f]/10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg backdrop-blur-sm z-20'
       >
-        <FontAwesomeIcon icon={faChevronRight} className='w-5 h-5 sm:w-6 sm:h-6' />
+        <FontAwesomeIcon icon={faChevronRight} className='w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5' style={{ color: '#3d2b1f' }} />
       </button>
       
       {/* Progress Bar */}

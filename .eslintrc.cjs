@@ -1,4 +1,5 @@
-module.exports = {
+
+stmodule.exports = {
   root: true,
   env: { browser: true, es2020: true },
   extends: [

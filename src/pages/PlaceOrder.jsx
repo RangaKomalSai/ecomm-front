@@ -202,6 +202,20 @@ const PlaceOrder = () => {
       return
     }
 
+    // Check inventory availability before placing order
+    for (const item of items) {
+      const product = item.product || getProductDetails(item.itemId)
+      if (product && product.sizes && item.rentalData?.selectedSize) {
+        const sizeOption = product.sizes.find(s => s.size === item.rentalData.selectedSize)
+        if (!sizeOption || !sizeOption.available) {
+          toast.error(`${product.name} - Size ${item.rentalData.selectedSize} is no longer available. Please remove it from your cart.`)
+          setIsPlacingOrder(false)
+          setOrderInProgress(false)
+          return
+        }
+      }
+    }
+
     setIsPlacingOrder(true)
     setOrderInProgress(true)
     

@@ -45,6 +45,14 @@ const Navbar = () => {
             <p>HOME</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-[#3d2b1f] hidden' />
         </NavLink>
+        <NavLink to='/men' onClick={scrollToTop} className='flex flex-col items-center gap-1 hover:text-[#5a3c2c] transition-colors'>
+            <p>MEN</p>
+            <hr className='w-2/4 border-none h-[1.5px] bg-[#3d2b1f] hidden' />
+        </NavLink>
+        <NavLink to='/women' onClick={scrollToTop} className='flex flex-col items-center gap-1 hover:text-[#5a3c2c] transition-colors'>
+            <p>WOMEN</p>
+            <hr className='w-2/4 border-none h-[1.5px] bg-[#3d2b1f] hidden' />
+        </NavLink>
         <NavLink to='/collection' onClick={scrollToTop} className='flex flex-col items-center gap-1 hover:text-[#5a3c2c] transition-colors'>
             <p>COLLECTION</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-[#3d2b1f] hidden' />
@@ -186,19 +194,25 @@ const Navbar = () => {
 
                 {/* Navigation Links */}
                 <div className='flex-1 py-4'>
-                    <NavLink onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                    <NavLink to='/' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
                         <span className='text-sm font-medium'>HOME</span>
                     </NavLink>
-                    <NavLink onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                    <NavLink to='/men' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                        <span className='text-sm font-medium'>MEN</span>
+                    </NavLink>
+                    <NavLink to='/women' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                        <span className='text-sm font-medium'>WOMEN</span>
+                    </NavLink>
+                    <NavLink to='/collection' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
                         <span className='text-sm font-medium'>COLLECTION</span>
                     </NavLink>
-                    <NavLink onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                    <NavLink to='/about' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
                         <span className='text-sm font-medium'>ABOUT</span>
                     </NavLink>
-                    <NavLink onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                    <NavLink to='/contact' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
                         <span className='text-sm font-medium'>CONTACT</span>
                     </NavLink>
-                    <NavLink onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
+                    <NavLink to='/subscription-plans' onClick={()=>{setVisible(false); scrollToTop()}} className='flex items-center gap-3 py-3 px-6 border-b border-[#e8dccf] hover:bg-[#e8dccf] transition-colors group/item'>
                         <span className='text-sm font-medium'>PLANS</span>
                     </NavLink>
                 </div>
