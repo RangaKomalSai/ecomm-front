@@ -170,11 +170,16 @@ const ShopContextProvider = (props) => {
         return totalAmount;
     }
 
-    const getProductsData = async () => {
+    const getProductsData = async (gender = null) => {
         try {
             // Include auth token in headers if user is logged in
             const headers = token ? { token } : {};
-            const response = await axios.get(backendUrl + '/api/product/list', { headers })
+            // Add gender query parameter if provided
+            const params = gender ? { gender } : {};
+            const response = await axios.get(backendUrl + '/api/product/list', { 
+                headers,
+                params 
+            })
             if (response.data.success) {
                 setProducts(response.data.products.reverse())
                 // Store filter options from backend
