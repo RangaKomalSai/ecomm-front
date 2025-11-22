@@ -11,14 +11,14 @@ const TopBanner = () => {
       >
         <div className="marquee">
           <div className="marquee__inner">
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
           </div>
           <div className="marquee__inner" aria-hidden="true">
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
-            <span className="mx-8 font-semibold">Use WELCOME50 to get 50% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
+            <span className="mx-8 font-semibold">Use WELCOME20 to get 20% off on your first order</span>
           </div>
         </div>
       </div>
