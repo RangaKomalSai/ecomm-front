@@ -29,7 +29,7 @@ const Footer = () => {
             <div className='space-y-3'>
               <div className='flex items-center gap-3 text-[#3d2b1f] opacity-80'>
                 <FontAwesomeIcon icon={faPhone} className='w-4 h-4 text-[#8b4513]' />
-                <span>+91 81692 29349</span>
+                <span>+91 93710 25117</span>
               </div>
               <div className='flex items-center gap-3 text-[#3d2b1f] opacity-80'>
                 <FontAwesomeIcon icon={faEnvelope} className='w-4 h-4 text-[#8b4513]' />
